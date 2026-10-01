@@ -628,135 +628,183 @@ def build_race_payload(sess, race_num):
             "gaps": [g1, g15, g30, g45, g_end if g_end is not None else 55.0]
         })
 
-    # 10. Chronological Race Story & Commentary Feed
+    # 10. Chronological Race Story & Commentary Feed (Overtakes, Lead Battles & Incident-Driven)
     race_commentary = []
     weather_str = "Rain falling, intermediate tyres fitted across the grid" if log["wet"] else "Dry and warm, soft and medium compounds selected"
     pole_d = grid_order[0] if grid_order else (fin_r[0] if fin_r else "")
     pole_name = dname(drivers, pole_d)
-
-    race_commentary.append({
-        "lap": 0,
-        "badge": "FORMATION LAP",
-        "type": "briefing",
-        "title": "Grid Formation & Strategy",
-        "text": f"22 machines line up on the grid. {weather_str}. Pole sitter {pole_name} leads the pack onto the starting grid.",
-        "is_user": False
-    })
-
-    user_d1_name = dname(drivers, user_ds[0])
-    user_d1_p1 = l1_pos_map.get(user_ds[0], 10)
+    
+    # 1. Lap 1: Launch & Lead Fight
     l1_lead_d = l1_sorted[0]
     l1_lead_name = dname(drivers, l1_lead_d)
-
+    l1_p2_d = l1_sorted[1] if len(l1_sorted) > 1 else l1_sorted[0]
+    l1_p2_name = dname(drivers, l1_p2_d)
+    
     if l1_lead_d == pole_d:
-        start_desc = f"{pole_name} gets a clean launch to hold the lead into Turn 1!"
+        start_lead_desc = f"Pole-sitter {pole_name} launches cleanly off the line, fending off {l1_p2_name} to defend P1 into Turn 1!"
     else:
-        start_desc = f"Stunning launch from {l1_lead_name}! Sweeping around the outside to snatch P1 from {pole_name} into the opening corner!"
+        start_lead_desc = f"LIGHTS OUT! SENSATIONAL LAUNCH from {l1_lead_name}, sweeping past pole-sitter {pole_name} to seize P1 into the opening corner!"
 
-    user_start_desc = f"Your driver {user_d1_name} charges into P{user_d1_p1} after a wheel-to-wheel opening lap fight."
+    user_start_parts = []
+    for ud in user_ds:
+        u_grid = grid_pos.get(ud, 10)
+        u_l1 = l1_pos_map.get(ud, 10)
+        u_diff = u_grid - u_l1
+        ud_name = dname(drivers, ud)
+        if u_diff > 0:
+            user_start_parts.append(f"{ud_name} gains +{u_diff} places to P{u_l1}")
+        elif u_diff < 0:
+            user_start_parts.append(f"{ud_name} slips to P{u_l1}")
+        else:
+            user_start_parts.append(f"{ud_name} holds steady at P{u_l1}")
+    
+    user_start_summary = " & ".join(user_start_parts) if user_start_parts else ""
+    
     race_commentary.append({
         "lap": 1,
-        "badge": "LIGHTS OUT",
+        "badge": "LIGHTS OUT & T1 BATTLE",
         "type": "start",
-        "title": "Turn 1 Battle & Launch",
-        "text": f"LIGHTS OUT AND AWAY WE GO! {start_desc} {user_start_desc}",
+        "title": f"{l1_lead_name} Leads Opening Lap",
+        "text": f"{start_lead_desc} Your lineup: {user_start_summary}.",
         "is_user": True
     })
 
-    p2_d = l15_sorted[1] if len(l15_sorted) > 1 else l15_sorted[0]
+    # 2. Lap 15: Early Stint, Lead Status & Key Overtakes
+    lead_15_d = l15_sorted[0]
+    lead_15_name = dname(drivers, lead_15_d)
+    p2_15_d = l15_sorted[1] if len(l15_sorted) > 1 else l15_sorted[0]
+    p2_15_name = dname(drivers, p2_15_d)
+    
+    movers_15 = []
+    for d in all_grid_drivers:
+        diff = l1_pos_map.get(d, 10) - l15_pos_map.get(d, 10)
+        if diff > 0:
+            movers_15.append((d, diff))
+    movers_15.sort(key=lambda x: -x[1])
+    
+    if lead_15_d != l1_lead_d:
+        lead_15_text = f"LEAD OVERTAKE! {lead_15_name} catches {l1_lead_name} down the back straight, deploying DRS to take the race lead!"
+    else:
+        lead_15_text = f"{lead_15_name} maintains the race lead, with {p2_15_name} running within DRS range (+1.2s)."
+        
+    mover_text = ""
+    if movers_15:
+        top_mover_d, top_mover_gain = movers_15[0]
+        mover_text = f" Biggest mover: {dname(drivers, top_mover_d)} charges through the field, gaining +{top_mover_gain} places to P{l15_pos_map.get(top_mover_d)}."
+
+    user_15_status = []
+    for ud in user_ds:
+        u_p15 = l15_pos_map.get(ud, 10)
+        user_15_status.append(f"{dname(drivers, ud)}: P{u_p15}")
+    
     race_commentary.append({
-        "lap": 8,
-        "badge": "DRS ACTIVE",
+        "lap": 15,
+        "badge": "LAP 15 LEAD FIGHT",
         "type": "battle",
-        "title": "High Speed Slipstream Duel",
-        "text": f"DRS enabled! {dname(drivers, p2_d)} opens the rear wing and ducks out of the slipstream, hunting down the leader with 330 km/h top speed down the main straight.",
-        "is_user": p2_d in user_ds
+        "title": f"{lead_15_name} vs {p2_15_name}",
+        "text": f"{lead_15_text}{mover_text} (Your drivers: {', '.join(user_15_status)}).",
+        "is_user": any(d in user_ds for d in [lead_15_d, p2_15_d]) or any(m[0] in user_ds for m in movers_15[:2])
     })
 
-    pit_lead = l15_sorted[0]
+    # 3. Lap 30: Pit Stop Strategies & Undercuts
+    lead_30_d = min(all_grid_drivers, key=lambda d: l30_pos_map.get(d, 20))
+    lead_30_name = dname(drivers, lead_30_d)
+    
+    if lead_30_d != lead_15_d:
+        pit_story = f"PIT STRATEGY SHAKEUP! {lead_30_name} triggers the undercut with a lightning 2.2s pit stop, successfully leaping ahead of {lead_15_name} for P1!"
+    else:
+        pit_story = f"PIT WINDOW OPEN: Leader {lead_30_name} boxes for fresh hard compounds. Clean 2.4s stationary stop protects track position against the chasing pack."
+        
+    u1_l30 = l30_pos_map.get(user_ds[0], 10)
+    u1_name = dname(drivers, user_ds[0])
+    u2_l30 = l30_pos_map.get(user_ds[1], 10) if len(user_ds) > 1 else None
+    u2_name = dname(drivers, user_ds[1]) if len(user_ds) > 1 else ""
+    
     race_commentary.append({
-        "lap": 18,
-        "badge": "PIT STOP",
+        "lap": 30,
+        "badge": "PIT STOPS & STRATEGY",
         "type": "pit",
-        "title": "Pit Window Opens: Undercut Strategy",
-        "text": f"'BOX, BOX, BOX!' - {dname(drivers, pit_lead)} enters pit lane for fresh hard tyres. Crew nails a rapid 2.3s stationary stop to defend track position!",
-        "is_user": pit_lead in user_ds
+        "title": f"Undercut Battle at Half Distance",
+        "text": f"{pit_story} Team radio to {u1_name} (P{u1_l30}): 'Box now, fresh rubber to the end!'",
+        "is_user": True
     })
 
-    if log["sc"] and log["sc_lap"]:
-        race_commentary.append({
-            "lap": log["sc_lap"],
-            "badge": "SAFETY CAR",
-            "type": "sc",
-            "title": "Safety Car Deployed",
-            "text": f"SAFETY CAR! {rng.choice(INCIDENT_COMMENTARY)} Field bunches up nose-to-tail, erasing all built-up time gaps.",
-            "is_user": False
-        })
-    elif log["vsc"] and log["vsc_lap"]:
-        race_commentary.append({
-            "lap": log["vsc_lap"],
-            "badge": "VSC",
-            "type": "vsc",
-            "title": "Virtual Safety Car",
-            "text": f"VSC deployed! Drivers restricted to delta times as marshals quickly recover debris.",
-            "is_user": False
-        })
-    elif log["dnfs"]:
+    # 4. Lap 38: Race Incidents, Retirements or Fierce Overtake Battles
+    if log["dnfs"]:
         dnf_d = log["dnfs"][0]
+        dnf_name = dname(drivers, dnf_d)
+        is_user_dnf = dnf_d in user_ds
+        if is_user_dnf:
+            inc_title = f"DISASTER: {dnf_name} Retires"
+            inc_text = f"HEARTBREAK FOR YOUR TEAM! {dnf_name} slows with terminal engine trouble, parking by the barriers. A bitter DNF from the points fight!"
+            inc_badge = "RETIREMENT (YOUR CAR)"
+        else:
+            inc_title = f"Yellow Flag: {dnf_name} Out"
+            inc_text = f"RETIREMENT! {dnf_name} suffers a mechanical failure and coasts into the runoff area."
+            inc_badge = "RETIREMENT"
+            
+        if log["sc"]:
+            inc_text += f" SAFETY CAR DEPLOYED on Lap {log.get('sc_lap', 36)}! The entire field bunches up nose-to-tail, erasing all time gaps!"
+            inc_badge = "SAFETY CAR & DRAMA"
+        elif log["vsc"]:
+            inc_text += " VSC deployed while marshals clear the stranded car."
+            
         race_commentary.append({
-            "lap": 30,
-            "badge": "RETIREMENT",
-            "type": "dnf",
-            "title": "Engine Failure Drama",
-            "text": f"YELLOW FLAG! Smoke billows from {dname(drivers, dnf_d)}'s car as they coast into the escape road with terminal failure.",
-            "is_user": dnf_d in user_ds
+            "lap": 38,
+            "badge": inc_badge,
+            "type": "dnf" if not log["sc"] else "sc",
+            "title": inc_title,
+            "text": inc_text,
+            "is_user": is_user_dnf
         })
     else:
+        # High speed overtake duel
+        sorted_30 = sorted(all_grid_drivers, key=lambda d: l30_pos_map.get(d, 20))
+        p2_30_d = sorted_30[1] if len(sorted_30) > 1 else sorted_30[0]
+        p3_30_d = sorted_30[2] if len(sorted_30) > 2 else sorted_30[0]
         race_commentary.append({
-            "lap": 30,
-            "badge": "MID-RACE DUEL",
+            "lap": 38,
+            "badge": "PODIUM COMBAT",
             "type": "battle",
-            "title": "Wheel-To-Wheel Combat",
-            "text": "Intense wheel-to-wheel combat in the front pack! Less than 1.5s covers the podium fight as tyres begin to blister.",
-            "is_user": False
+            "title": "Wheel-to-Wheel Duel",
+            "text": f"INTENSE WHEEL-TO-WHEEL ACTION! {dname(drivers, p2_30_d)} and {dname(drivers, p3_30_d)} go side-by-side through the high-speed complex, separated by mere tenths of a second!",
+            "is_user": any(d in user_ds for d in [p2_30_d, p3_30_d])
         })
 
-    user_focus_d = user_ds[0]
-    u_p = finish_pos.get(user_focus_d, 10)
-    radio_quotes = [
-        f"Radio from your pit wall: 'Keep this relentless pace {dname(drivers, user_focus_d)}, tyre degradation is looking great and we are fighting for P{u_p}!'",
-        f"Radio from your pit wall: 'Target lap time 1:21.8 - bring the car home in the points!'",
-        f"Radio to {dname(drivers, user_focus_d)}: 'Mode 6 on exit, maximum deploy down the back straight!'"
-    ]
+    # 5. Lap 48: Closing Stint & Fastest Lap
+    fl_d = log["fl"] if log["fl"] else (fin_r[0] if fin_r else None)
+    fl_name = dname(drivers, fl_d) if fl_d else "Leader"
+    lead_45_d = l45_sorted[0]
+    lead_45_name = dname(drivers, lead_45_d)
+    p2_45_name = dname(drivers, l45_sorted[1]) if len(l45_sorted) > 1 else ""
+    
     race_commentary.append({
-        "lap": 38,
-        "badge": "TEAM RADIO",
-        "type": "radio",
-        "title": "Garage Intercom",
-        "text": rng.choice(radio_quotes),
-        "is_user": True
+        "lap": 48,
+        "badge": "PURPLE SECTORS & LATE CHARGE",
+        "type": "fl",
+        "title": f"{fl_name} Claims Fastest Lap",
+        "text": f"PURPLE SECTOR RUSH! {fl_name} clocks the fastest lap of the race! Up front, {lead_45_name} pushes to the limit with {p2_45_name} in relentless pursuit in the dying laps.",
+        "is_user": fl_d in user_ds
     })
 
-    fl_d = log["fl"] if log["fl"] else (fin_r[0] if fin_r else None)
-    if fl_d:
-        race_commentary.append({
-            "lap": 46,
-            "badge": "PURPLE SECTOR",
-            "type": "fl",
-            "title": "Fastest Lap Charge",
-            "text": f"{dname(drivers, fl_d)} lights up the timing screens with purple sectors in all three sectors to set the fastest lap of the race!",
-            "is_user": fl_d in user_ds
-        })
-
+    # 6. Chequered Flag: Victory & Team Points Haul
     winner_name = dname(drivers, winner) if winner else "Unknown"
     winner_t = season.team_of.get(winner, "Unknown")
+    p2_fin_name = dname(drivers, fin_r[1]) if len(fin_r) > 1 else ""
+    p3_fin_name = dname(drivers, fin_r[2]) if len(fin_r) > 2 else ""
+    
     user_pts_race = sum(RACE_PTS[finish_pos[d] - 1] for d in user_ds if d in fin_r and finish_pos[d] <= len(RACE_PTS))
+    u1_fin = finish_pos.get(user_ds[0], "DNF")
+    u2_fin = finish_pos.get(user_ds[1], "DNF")
+    
+    u_summary = f"Your squad: {dname(drivers, user_ds[0])} finishes P{u1_fin}, {dname(drivers, user_ds[1])} finishes P{u2_fin} (+{user_pts_race} pts total)."
+    
     race_commentary.append({
         "lap": total_laps,
         "badge": "CHEQUERED FLAG",
         "type": "finish",
-        "title": f"{winner_name} Wins!",
-        "text": f"CHEQUERED FLAG! {winner_name} powers across the finish line to take victory for {winner_t}! Your team secures +{user_pts_race} championship points this round.",
+        "title": f"{winner_name} Wins the {track['name']}!",
+        "text": f"VICTORY! {winner_name} takes the chequered flag for {winner_t}! Podium: 1st {winner_name}, 2nd {p2_fin_name}, 3rd {p3_fin_name}. {u_summary}",
         "is_user": True
     })
 

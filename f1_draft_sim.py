@@ -606,7 +606,7 @@ class Season:
         base = {d: self.base_score(d, track, wet) for d in ds}
         cm = {d: float(np.clip(1.2 - 0.15 * self.drv.get(d, {}).get("consistency_z", 0.0), 0.70, 1.40))
               for d in ds}
-        strat = {d: 1.4 - 0.65 * PRINCIPALS[self.grid[self.team_of[d]]["principal"]][0] / 100 for d in ds}
+        strat = {d: 1.4 - 0.65 * PRINCIPALS.get(self.grid[self.team_of[d]].get("principal"), (75, 75))[0] / 100 for d in ds}
         home, specialists = self.weekend_notes(track, ds)
 
         # qualifying
@@ -684,7 +684,7 @@ class Season:
         for d in ds:
             self.form[d] = 0.65 * self.form[d] + rng.gauss(0, 1.5)
         for t, v in self.grid.items():
-            dev = PRINCIPALS[v["principal"]][1]
+            dev = PRINCIPALS.get(v.get("principal"), (75, 75))[1]
             delta = rng.gauss((dev - 76) / 100 * 0.6 + (self.c_mean - self.car_str[t]) * 0.04, 1.2)
             self.car_str[t] = float(np.clip(self.car_str[t] + delta, 45, 99))
 
