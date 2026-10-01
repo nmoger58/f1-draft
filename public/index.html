@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>F1 DRAFT SIMULATOR - 2026 EDITION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;0,900;1,700&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --f1-red: #E10600;
+            --f1-dark: #07090E;
+            --f1-card-bg: #111522;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: var(--f1-dark);
+            color: #F1F5F9;
+            font-family: 'Titillium Web', sans-serif;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(225, 6, 0, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.06) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 24px 24px, 24px 24px;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Rarity Borders & Glowing Effects */
+        .rarity-LEGENDARY {
+            border-color: #F59E0B;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(17, 21, 34, 0.96) 60%);
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.22);
+        }
+        .rarity-EPIC {
+            border-color: #A855F7;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.16) 0%, rgba(17, 21, 34, 0.96) 60%);
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.22);
+        }
+        .rarity-RARE {
+            border-color: #06B6D4;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(17, 21, 34, 0.96) 60%);
+            box-shadow: 0 0 14px rgba(6, 182, 212, 0.18);
+        }
+        .rarity-UNCOMMON {
+            border-color: #10B981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(17, 21, 34, 0.96) 60%);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.14);
+        }
+        .rarity-COMMON {
+            border-color: #475569;
+            background: linear-gradient(135deg, rgba(71, 85, 105, 0.16) 0%, rgba(17, 21, 34, 0.96) 60%);
+        }
+        .rarity-BLOCKED {
+            border-color: #EF4444 !important;
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(239, 68, 68, 0.12),
+                rgba(239, 68, 68, 0.12) 10px,
+                rgba(17, 21, 34, 0.96) 10px,
+                rgba(17, 21, 34, 0.96) 20px
+            ) !important;
+            opacity: 0.55;
+            cursor: not-allowed !important;
+        }
+
+        .badge-LEGENDARY { background-color: #F59E0B; color: #000; font-weight: 800; }
+        .badge-EPIC { background-color: #A855F7; color: #FFF; font-weight: 800; }
+        .badge-RARE { background-color: #06B6D4; color: #000; font-weight: 800; }
+        .badge-UNCOMMON { background-color: #10B981; color: #000; font-weight: 800; }
+        .badge-COMMON { background-color: #64748B; color: #FFF; font-weight: 800; }
+        .badge-BLOCKED { background-color: #EF4444; color: #FFF; font-weight: 800; }
+
+        .card-active:active:not(.rarity-BLOCKED) {
+            transform: scale(0.97);
+        }
+        @media (hover: hover) {
+            .card-hover:hover:not(.rarity-BLOCKED) {
+                transform: translateY(-4px) scale(1.02);
+                transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                filter: brightness(1.15);
+            }
+        }
+
+        /* Podium Steps */
+        .podium-step-1 {
+            background: linear-gradient(180deg, #F59E0B 0%, #B45309 100%);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+        }
+        .podium-step-2 {
+            background: linear-gradient(180deg, #94A3B8 0%, #475569 100%);
+            box-shadow: 0 0 20px rgba(148, 163, 184, 0.25);
+        }
+        .podium-step-3 {
+            background: linear-gradient(180deg, #D97706 0%, #78350F 100%);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.25);
+        }
+        
+        /* Shimmer Gold */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .gold-shimmer {
+            background: linear-gradient(90deg, #F59E0B 0%, #FEF08A 50%, #F59E0B 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            animation: shimmer 3s infinite linear;
+        }
+
+        /* Hide scrollbars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+    <div id="app" class="flex-1 flex flex-col w-full">
+
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- TOP F1 NAV BAR (MOBILE-FRIENDLY & RESPONSIVE) -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 py-3 sticky top-0 z-50 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5 sm:space-x-3.5">
+                <div class="bg-red-600 px-2.5 py-0.5 sm:px-3 sm:py-1 font-black text-lg sm:text-xl italic tracking-tighter text-white transform -skew-x-12 select-none">
+                    F1
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-xl font-black uppercase tracking-wider text-white leading-tight">
+                        DRAFT SIM <span class="text-red-500 font-mono text-sm sm:text-lg">2026</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest hidden sm:block">Balanced Telemetry Edition</p>
+                </div>
+            </div>
+
+            <!-- Simulation Controls / Status in Header -->
+            <div v-if="phase === 'sim'" class="flex items-center space-x-2 sm:space-x-4 text-xs font-mono">
+                <div class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300">
+                    <span class="text-slate-500 mr-1 text-[10px]">R</span>
+                    <b class="text-white text-xs sm:text-sm">{{ currentRound }}</b><span class="text-slate-500 text-[10px]">/{{ totalRaces }}</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-yellow-400 font-bold truncate max-w-[110px] sm:max-w-[200px] text-[11px] sm:text-xs">
+                    {{ userTeam ? userTeam.name : 'Your Team' }}
+                </div>
+                <button @click="showStandingsModal = true" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 sm:px-3 py-1 rounded-lg text-slate-200 text-xs font-bold uppercase transition flex items-center space-x-1">
+                    <span>🏆</span>
+                    <span class="hidden sm:inline">Standings</span>
+                </button>
+            </div>
+            <div v-else-if="phase === 'ended'" class="flex items-center space-x-2 text-xs font-mono">
+                <div class="bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 font-bold px-3 py-1 rounded-lg uppercase tracking-wider text-[11px] sm:text-xs flex items-center space-x-1.5">
+                    <span>👑</span> <span>Season Finale</span>
+                </div>
+                <button @click="resetToConfig" class="bg-red-600 hover:bg-red-500 text-white font-bold px-3 py-1 rounded-lg uppercase tracking-wider text-xs transition active:scale-95">
+                    New Season ↺
+                </button>
+            </div>
+            <div v-else class="text-[11px] text-slate-400 font-mono uppercase bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+                <span class="text-red-400 font-bold">{{ phase.toUpperCase() }}</span>
+            </div>
+        </header>
+
+        <!-- MAIN APP CONTENT AREA -->
+        <main class="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-6 flex flex-col justify-start">
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 0: SETUP / CONFIGURATION SCREEN (MOBILE-FIRST) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <section v-if="phase === 'config'" class="max-w-2xl mx-auto py-6 sm:py-10 space-y-6 w-full">
+                <div class="text-center space-y-2">
+                    <span class="bg-red-600/20 text-red-500 border border-red-500/30 text-[11px] px-3 py-1 rounded-full uppercase tracking-widest font-bold font-mono">
+                        Championship Setup
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-black uppercase text-white tracking-wide">Paddock Protocol</h2>
+                    <p class="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
+                        Choose your draft mechanics and competition pool to build your 2026 constructor outfit.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur">
+                    <!-- Mode Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5">1. Draft Format</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div @click="config.mode = 'pack'" 
+                                 :class="config.mode === 'pack' ? 'border-red-500 bg-red-950/20 shadow-md shadow-red-500/10' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'"
+                                 class="border rounded-xl p-4 cursor-pointer transition-all card-active">
+                                <div class="flex items-center space-x-2.5 mb-1.5">
+                                    <span class="text-xl">🎴</span>
+                                    <h3 class="font-bold text-white text-base">Booster Pack Mode</h3>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed">Draw 5 randomized cards per round with authentic rarity tiers and reroll rights.</p>
+                            </div>
+                            <div @click="config.mode = 'manual'" 
+                                 :class="config.mode === 'manual' ? 'border-red-500 bg-red-950/20 shadow-md shadow-red-500/10' : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'"
+                                 class="border rounded-xl p-4 cursor-pointer transition-all card-active">
+                                <div class="flex items-center space-x-2.5 mb-1.5">
+                                    <span class="text-xl">📋</span>
+                                    <h3 class="font-bold text-white text-base">Full Manual Board</h3>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed">Search and choose directly from the full roster of active and historical cards.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Era Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5">2. Driver Pool</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <button v-for="era in eras" :key="era.id"
+                                    @click="config.era = era.id"
+                                    :class="config.era === era.id ? 'border-red-500 bg-red-600 text-white font-bold' : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700'"
+                                    class="border py-2.5 px-3 rounded-xl text-xs uppercase tracking-wider transition active:scale-95">
+                                {{ era.name }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Parity Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-400">3. Field Parity</label>
+                            <span class="text-xs font-mono font-bold text-yellow-400">{{ (config.parity * 100).toFixed(0) }}% ({{ config.parity <= 0.2 ? 'Raw Hegemony' : (config.parity >= 0.7 ? 'Equal Cars' : 'Balanced Racing') }})</span>
+                        </div>
+                        <input type="range" min="0.0" max="0.95" step="0.05" v-model.number="config.parity"
+                               class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600">
+                    </div>
+
+                    <button @click="startDraftPhase" class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 text-white font-black py-4 rounded-xl uppercase tracking-widest text-sm sm:text-base shadow-xl shadow-red-600/20 active:scale-98 transition">
+                        Initialize Draft Protocol ➔
+                    </button>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 1: DRAFT PHASE (RESPONSIVE FOR ALL SCREEN SIZES) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <section v-if="phase === 'draft'" class="space-y-4 sm:space-y-6 w-full">
+                <!-- Stepper & Actions Header -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur">
+                    <div>
+                        <div class="flex items-center space-x-2 text-xs font-mono mb-1">
+                            <span class="px-2 py-0.5 rounded bg-red-600/20 text-red-400 border border-red-500/30 uppercase font-bold">
+                                Step {{ draftStep }} of 4
+                            </span>
+                            <span class="text-slate-500">&bull;</span>
+                            <span class="text-slate-400 uppercase tracking-widest">{{ config.mode.toUpperCase() }} MODE</span>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-black uppercase text-white tracking-wide">
+                            {{ currentStepTitle }}
+                        </h2>
+                    </div>
+
+                    <!-- Pack / Manual Action Controls -->
+                    <div class="flex items-center space-x-2">
+                        <button v-if="config.mode === 'pack'" @click="loadDraftCards" :disabled="loadingCards"
+                                class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3.5 py-1.5 rounded-lg text-xs uppercase font-bold tracking-wider transition active:scale-95 flex items-center space-x-1.5">
+                            <span>🔄</span> <span>Redraw Pack</span>
+                        </button>
+                        <input v-if="config.mode === 'manual'" v-model="searchQuery" type="text" placeholder="Search cards..." 
+                               class="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg text-xs text-white focus:outline-none focus:border-red-500 w-full sm:w-48">
+                    </div>
+                </div>
+
+                <!-- Current Picks Summary Tray (Mobile-First 2x2 grid) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl">
+                    <div class="border border-slate-800/80 rounded-lg p-2 bg-slate-900/50">
+                        <div class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Driver 1</div>
+                        <div class="text-xs font-bold truncate" :class="picks.driver1 ? 'text-green-400' : 'text-slate-600'">
+                            {{ picks.driver1 ? formatPickName(picks.driver1) : 'PENDING...' }}
+                        </div>
+                    </div>
+                    <div class="border border-slate-800/80 rounded-lg p-2 bg-slate-900/50">
+                        <div class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Driver 2</div>
+                        <div class="text-xs font-bold truncate" :class="picks.driver2 ? 'text-green-400' : 'text-slate-600'">
+                            {{ picks.driver2 ? formatPickName(picks.driver2) : 'PENDING...' }}
+                        </div>
+                    </div>
+                    <div class="border border-slate-800/80 rounded-lg p-2 bg-slate-900/50">
+                        <div class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Car / Team</div>
+                        <div class="text-xs font-bold truncate" :class="picks.constructor ? 'text-green-400' : 'text-slate-600'">
+                            {{ picks.constructor ? formatPickName(picks.constructor) : 'PENDING...' }}
+                        </div>
+                    </div>
+                    <div class="border border-slate-800/80 rounded-lg p-2 bg-slate-900/50">
+                        <div class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Principal</div>
+                        <div class="text-xs font-bold truncate" :class="picks.principal ? 'text-green-400' : 'text-slate-600'">
+                            {{ picks.principal ? picks.principal : 'PENDING...' }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARDS VIEW (Mobile Responsive Grid / Pack Cards) -->
+                <div v-if="loadingCards" class="py-20 text-center space-y-3">
+                    <div class="inline-block animate-spin w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full"></div>
+                    <p class="text-xs font-mono uppercase tracking-widest text-slate-400">Dealing Cards...</p>
+                </div>
+
+                <div v-else :class="config.mode === 'pack' ? 'flex justify-center flex-wrap gap-2.5 sm:gap-3.5 py-2' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5'">
+                    <div v-for="c in filteredCards" :key="c.key"
+                         @click="selectCard(c)"
+                         :class="[
+                             c.blocked ? 'rarity-BLOCKED' : ('rarity-' + c.rarity + ' card-hover card-active cursor-pointer'),
+                             config.mode === 'pack' ? 'w-full sm:w-52' : ''
+                         ]"
+                         class="border rounded-xl p-3 flex flex-col justify-between transition-all backdrop-blur-sm select-none">
+                        
+                        <!-- Top Header: Year, Rarity & OVR -->
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1.5">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded text-white bg-slate-800/90 border border-slate-700">
+                                        {{ c.year }}
+                                    </span>
+                                    <span :class="'badge-' + (c.blocked ? 'BLOCKED' : c.rarity)" 
+                                          class="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-bold shadow-sm">
+                                        {{ c.blocked ? 'BLOCKED' : c.rarity }}
+                                    </span>
+                                </div>
+                                <div class="text-right flex items-baseline space-x-1">
+                                    <span class="text-xl font-black mono text-yellow-400 leading-none">{{ Math.round(c.rating) }}</span>
+                                    <span class="text-[8px] uppercase tracking-widest text-slate-500 font-bold">OVR</span>
+                                </div>
+                            </div>
+
+                            <!-- Name & Team -->
+                            <div class="mb-2">
+                                <h3 class="font-black text-sm sm:text-base text-white tracking-tight leading-snug truncate">{{ c.name }}</h3>
+                                <p class="text-[11px] text-slate-400 font-medium truncate">{{ c.team || c.code }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Stats Line (Compact telemetry chips) -->
+                        <div class="pt-1.5 border-t border-slate-800/80">
+                            <!-- Drivers stats -->
+                            <div v-if="draftStep <= 2" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                                <span>TYR <b class="text-slate-200">{{ c.tyre_z > 0 ? '+' : '' }}{{ c.tyre_z.toFixed(1) }}</b></span>
+                                <span>SPD <b class="text-slate-200">{{ c.top_speed_z > 0 ? '+' : '' }}{{ c.top_speed_z.toFixed(1) }}</b></span>
+                                <span>CON <b class="text-slate-200">{{ c.consistency_z > 0 ? '+' : '' }}{{ c.consistency_z.toFixed(1) }}</b></span>
+                            </div>
+
+                            <!-- Constructor stats -->
+                            <div v-else-if="draftStep === 3" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                                <span>Rel: <b class="text-white">{{ c.reliability }}%</b></span>
+                                <span>Aero: <b class="text-white">{{ (c.style * 100).toFixed(0) }}%</b></span>
+                            </div>
+
+                            <!-- Principal stats -->
+                            <div v-else-if="draftStep === 4" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
+                                <span>Strat: <b class="text-green-400">{{ c.strategy }}</b></span>
+                                <span>Dev: <b class="text-blue-400">{{ c.development }}</b></span>
+                            </div>
+
+                            <!-- Blocked Reason -->
+                            <div v-if="c.blocked" class="text-center text-[9px] text-red-400 font-bold uppercase tracking-wider mt-1">
+                                🔒 Duplicate Locked
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 2: TEAM REVEAL & FULL GRID (MOBILE FRIENDLY) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <section v-if="phase === 'reveal'" class="max-w-3xl mx-auto py-6 space-y-6 w-full">
+                <div class="text-center space-y-1.5">
+                    <span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-mono font-bold">
+                        Draft Complete
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-black uppercase text-white tracking-wide">Paddock Entry Approved</h2>
+                </div>
+
+                <!-- Your Team Card -->
+                <div class="bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 border-2 border-red-500/60 rounded-2xl p-5 sm:p-7 shadow-2xl backdrop-blur">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+                        <div>
+                            <span class="text-[10px] font-mono text-red-400 uppercase tracking-widest font-bold">Entry Name</span>
+                            <h3 class="text-2xl sm:text-3xl font-black text-white uppercase">{{ userTeam ? userTeam.name : 'Your Team' }}</h3>
+                            <p class="text-xs text-slate-400">Principal: <b class="text-white">{{ userTeam ? userTeam.principal : '' }}</b></p>
+                        </div>
+                        <div class="text-left sm:text-right">
+                            <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest block">Machinery Rating</span>
+                            <span class="text-3xl font-black mono text-yellow-400">{{ userTeam ? userTeam.car : 80 }} <span class="text-xs text-slate-500">OVR</span></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div v-for="d in (userTeam ? userTeam.drivers : [])" :key="d.code" 
+                             class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-white text-base">{{ d.name }}</h4>
+                                <span :class="'badge-' + d.rarity" class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded">{{ d.rarity }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xl font-black mono text-white">{{ Math.round(d.rating) }}</span>
+                                <span class="block text-[8px] text-slate-500 uppercase tracking-widest font-bold">OVR</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Grid Hierarchy List -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 backdrop-blur space-y-3">
+                    <h4 class="font-bold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2 flex justify-between">
+                        <span>2026 Grid Hierarchy (Ranked by Car OVR)</span>
+                        <span class="font-mono text-slate-500">11 Teams</span>
+                    </h4>
+                    <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                        <div v-for="(t, idx) in fullGrid" :key="t.team"
+                             :class="t.is_user ? 'border-yellow-500/70 bg-yellow-500/10' : 'border-slate-800/80 bg-slate-950/40'"
+                             class="flex items-center justify-between p-2.5 rounded-xl border text-xs">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="mono font-bold text-slate-500 w-5">{{ idx + 1 }}.</span>
+                                <span class="font-bold text-white truncate">{{ t.team }}</span>
+                                <span v-if="t.is_user" class="text-[9px] font-black uppercase tracking-wider bg-yellow-400 text-slate-950 px-1.5 py-0.5 rounded">YOU</span>
+                            </div>
+                            <span class="font-bold text-yellow-400 mono ml-2 shrink-0">Car {{ Math.round(t.car_rating) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="connectSimulationSocket" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 text-white font-black py-4 sm:py-5 rounded-2xl uppercase tracking-widest text-base sm:text-lg shadow-xl shadow-green-600/30 active:scale-98 transition">
+                    Start 2026 World Championship 🏁
+                </button>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 3: LIVE RACE SIMULATION & TELEMETRY (RESPONSIVE) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <section v-if="phase === 'sim'" class="space-y-4 sm:space-y-6 w-full">
+                <!-- Mobile Control Bar -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-xl backdrop-blur">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full animate-ping" :class="isAutoRunning ? 'bg-green-500' : 'bg-yellow-500'"></span>
+                        <span class="text-[11px] uppercase font-mono tracking-wider font-bold text-slate-300 truncate">
+                            {{ isAutoRunning ? 'STREAMING' : 'PAUSED' }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button @click="stepNextRace" :disabled="isAutoRunning"
+                                class="bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white px-3.5 sm:px-5 py-2 rounded-xl text-xs uppercase font-black tracking-wider transition active:scale-95 shadow-md shadow-red-600/20">
+                            Next Race ➔
+                        </button>
+                        <button v-if="!isAutoRunning" @click="startAutoPlay"
+                                class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs uppercase font-bold tracking-wider transition active:scale-95">
+                            ⏩ Stream Rest
+                        </button>
+                        <button v-else @click="pauseAutoPlay"
+                                class="bg-yellow-500 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs uppercase tracking-wider transition active:scale-95">
+                            ⏸️ Pause
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Race Data View (Responsive Columns) -->
+                <div v-if="latestRace" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <!-- Left: Track info, qualifying, incidents -->
+                    <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+                        <!-- Circuit Banner -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center space-x-1.5 text-xs font-mono">
+                                    <span class="bg-red-600 text-white font-black px-2 py-0.5 rounded">R{{ latestRace.round }}/{{ latestRace.total_rounds }}</span>
+                                    <span v-if="latestRace.sprint" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Sprint</span>
+                                    <span v-if="latestRace.wet" class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">🌧️ Wet</span>
+                                    <span v-else class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold uppercase text-[10px]">☀️ Dry</span>
+                                </div>
+                                <span class="text-xs text-slate-400 font-mono">{{ latestRace.circuit }}</span>
+                            </div>
+
+                            <h3 class="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">{{ latestRace.track }}</h3>
+                            <p v-if="latestRace.flavour" class="text-xs text-slate-400 mt-1 italic">"{{ latestRace.flavour }}"</p>
+
+                            <!-- Weekend notes -->
+                            <div v-if="latestRace.weekend_notes && latestRace.weekend_notes.length" class="mt-3 pt-3 border-t border-slate-800/80 space-y-1">
+                                <div v-for="(note, nIdx) in latestRace.weekend_notes" :key="nIdx" 
+                                     class="text-xs flex items-center space-x-2"
+                                     :class="note.is_user ? 'text-yellow-400 font-bold' : 'text-slate-400'">
+                                    <span>&bull;</span>
+                                    <span>{{ note.text }}</span>
+                                    <span v-if="note.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded uppercase font-black">YOU</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Incidents -->
+                        <div v-if="latestRace.incidents && latestRace.incidents.length" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Track Incidents</h4>
+                            <div v-for="(inc, iIdx) in latestRace.incidents" :key="iIdx"
+                                 class="flex items-center space-x-2.5 p-2 rounded-lg border text-xs"
+                                 :class="inc.type === 'sc' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-300' : (inc.type === 'dnf' ? 'bg-red-500/10 border-red-500/40 text-red-300' : 'bg-slate-950 border-slate-800 text-slate-300')">
+                                <span class="font-bold font-mono px-1.5 py-0.5 rounded text-[9px] shrink-0"
+                                      :class="inc.type === 'sc' ? 'bg-yellow-500 text-slate-950' : (inc.type === 'dnf' ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-200')">
+                                    {{ inc.badge }}
+                                </span>
+                                <span class="truncate">{{ inc.text }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Lap 30 snapshot -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex justify-between">
+                                <span>Lap 30 Timing Snapshot</span>
+                                <span class="font-mono text-[10px] text-slate-500">Live Intervals</span>
+                            </h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
+                                <div v-for="car in latestRace.lap30_snapshot" :key="car.pos"
+                                     :class="car.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800/60 text-slate-300'"
+                                     class="flex justify-between items-center px-3 py-1.5 rounded-lg border">
+                                    <div class="flex items-center space-x-2 truncate">
+                                        <span class="text-slate-500">P{{ car.pos }}</span>
+                                        <span class="truncate">{{ car.name }}</span>
+                                        <span v-if="car.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                    </div>
+                                    <span :class="car.interval === 'LEADER' ? 'text-green-400 font-bold' : 'text-slate-400'" class="ml-2 shrink-0">{{ car.interval }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Results & Team Standings -->
+                    <div class="space-y-4 sm:space-y-6">
+                        <!-- Chequered Flag Result -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">
+                            <div class="border-b border-slate-800 pb-2.5">
+                                <div class="text-[10px] text-green-400 font-mono uppercase tracking-widest font-bold">Chequered Flag</div>
+                                <h4 class="text-lg sm:text-xl font-black text-white uppercase">{{ latestRace.chequered_flag.winner }} WINS!</h4>
+                            </div>
+
+                            <!-- Top 10 Order -->
+                            <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto pr-1">
+                                <div v-for="d in latestRace.chequered_flag.top10" :key="d.pos"
+                                     :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
+                                     class="flex items-center justify-between px-2.5 py-1.5 rounded-lg border">
+                                    <div class="flex items-center space-x-2 truncate">
+                                        <span :class="d.pos === 1 ? 'text-yellow-400 font-bold' : 'text-slate-500'">P{{ d.pos }}</span>
+                                        <span class="truncate">{{ d.name }}</span>
+                                        <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                        <span v-if="d.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded font-black">FL</span>
+                                    </div>
+                                    <span class="text-green-400 font-bold ml-2 shrink-0">+{{ d.pts }}pts</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Your Team Performance -->
+                        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-yellow-500/40 rounded-2xl p-4 sm:p-5 shadow-xl space-y-2">
+                            <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-yellow-400">Your Team Performance</h4>
+                            <div class="space-y-1.5">
+                                <div v-for="yd in latestRace.user_team_perf" :key="yd.code"
+                                     class="flex justify-between items-center bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs sm:text-sm font-mono">
+                                    <div class="truncate mr-2">
+                                        <span class="font-bold text-white truncate block sm:inline">{{ yd.name }}</span>
+                                        <span v-if="yd.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded sm:ml-2">FASTEST LAP</span>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <span :class="yd.dnf ? 'text-red-500' : 'text-yellow-400'" class="font-black text-sm mr-2">{{ yd.pos }}</span>
+                                        <span class="text-green-400 font-bold">+{{ yd.pts }}pts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 4: SUMMER BREAK MODAL (RESPONSIVE CASINO WHEEL) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <div v-if="summerBreakPrompt" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md">
+                <div class="bg-slate-900 border-2 border-yellow-500 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
+                    <div class="text-center space-y-1">
+                        <span class="bg-yellow-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-widest font-mono">
+                            Round {{ summerBreakPrompt.round }} &bull; Factory Shutdown
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-black uppercase text-white tracking-wide">F1 Summer Break Decisions</h2>
+                        <p class="text-slate-400 text-xs">Choose whether to lock your setup or take strategic risks for the final stint.</p>
+                    </div>
+
+                    <!-- Best & Worst Driver Callout -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono">
+                        <div class="border border-green-500/30 bg-green-500/10 p-2.5 rounded-lg">
+                            <span class="text-[9px] text-green-400 uppercase font-bold block">Top Driver</span>
+                            <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.best_driver.name }}</div>
+                            <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.best_driver.pos }} WDC &bull; {{ summerBreakPrompt.best_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.best_driver.rating }}</b></div>
+                        </div>
+                        <div class="border border-red-500/30 bg-red-500/10 p-2.5 rounded-lg">
+                            <span class="text-[9px] text-red-400 uppercase font-bold block">Trailing Driver</span>
+                            <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.worst_driver.name }}</div>
+                            <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.worst_driver.pos }} WDC &bull; {{ summerBreakPrompt.worst_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.worst_driver.rating }}</b></div>
+                        </div>
+                    </div>
+
+                    <!-- Summer Break Options -->
+                    <div v-if="!summerBreakProcessing" class="space-y-2 text-left">
+                        <button @click="submitSummerBreak(1)" 
+                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 transition card-active">
+                            <div class="font-bold text-white text-xs">Option 1: Continue With Existing Lineup</div>
+                            <div class="text-[11px] text-slate-400">Zero modifications. Keep current ratings and points intact.</div>
+                        </button>
+
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono pt-1">Strategic Upgrades & Risks:</div>
+
+                        <button @click="submitSummerBreak(2, 1)" 
+                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-green-500 transition card-active">
+                            <div class="font-bold text-green-400 text-xs">Option 2A: Driver Focus (Wheel 1-7 OVR Swap)</div>
+                            <div class="text-[11px] text-slate-400">Spin wheel 1-5 (rare 6-7). Deduct from trailing driver and give to top driver.</div>
+                        </button>
+
+                        <button @click="submitSummerBreak(2, 2)" 
+                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-yellow-500 transition card-active">
+                            <div class="font-bold text-yellow-400 text-xs">Option 2B: Car Focus (Points for Upgrades)</div>
+                            <div class="text-[11px] text-slate-400">Sacrifice 10-100 season points from trailing driver for +1 to +10 Car OVR!</div>
+                        </button>
+
+                        <button @click="submitSummerBreak(2, 3)" 
+                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-red-500 transition card-active">
+                            <div class="font-bold text-red-400 text-xs">Option 2C: Take The Risk (Grid Roulette)</div>
+                            <div class="text-[11px] text-slate-400">Spin against rival. Above your top driver = +10 to +1 OVR. Below = -1, -2 loss!</div>
+                        </button>
+                    </div>
+
+                    <div v-else class="text-center py-6 space-y-2">
+                        <div class="inline-block animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+                        <p class="text-xs font-mono text-yellow-400 font-bold uppercase tracking-wider">Simulating Wheel Decision...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summer Break Result Popup -->
+            <div v-if="summerBreakResult" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+                <div class="bg-slate-900 border-2 border-green-500 rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                    <span class="text-4xl">🎰</span>
+                    <h3 class="text-xl font-black uppercase text-white tracking-wide">{{ summerBreakResult.headline }}</h3>
+                    <p class="text-slate-300 text-xs leading-relaxed">{{ summerBreakResult.message }}</p>
+                    <button @click="summerBreakResult = null" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-xs transition">
+                        Resume To Round 13 ➔
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- STAGE 5: GRAND CHAMPIONSHIP PODIUM & FINALE (COMPLETELY OVERHAULED) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <section v-if="phase === 'ended' && seasonEndData" class="max-w-4xl mx-auto py-6 sm:py-10 space-y-6 sm:space-y-8 w-full">
+                <!-- Grand Championship Header -->
+                <div class="text-center space-y-2 relative">
+                    <div class="inline-block bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-mono font-bold">
+                        FIA Gala & World Championship Ceremony
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black uppercase text-white tracking-tight">
+                        <span class="gold-shimmer">2026 WORLD CHAMPIONSHIP</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-yellow-300 font-bold uppercase tracking-wider max-w-lg mx-auto bg-slate-900/80 p-2.5 rounded-xl border border-yellow-500/30">
+                        {{ seasonEndData.verdict }}
+                    </p>
+                </div>
+
+                <!-- 🏆 REAL 3D PODIUM CEREMONY (P2, P1, P3) -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-8 backdrop-blur shadow-2xl space-y-6">
+                    <h3 class="text-xs font-mono uppercase tracking-widest font-bold text-center text-slate-400">
+                        Official World Championship Podium
+                    </h3>
+
+                    <!-- Podium Steps -->
+                    <div class="flex items-end justify-center gap-2 sm:gap-4 pt-8 pb-4">
+                        <!-- P2 Step (Silver) -->
+                        <div class="flex-1 max-w-[170px] flex flex-col items-center">
+                            <div class="text-center mb-2 px-1">
+                                <span class="text-slate-400 text-[10px] font-mono block">P2 SILVER</span>
+                                <h4 class="font-bold text-white text-xs sm:text-sm truncate w-full">{{ seasonEndData.drivers[1] ? seasonEndData.drivers[1].name : '' }}</h4>
+                                <span class="text-[10px] font-mono text-slate-400">{{ seasonEndData.drivers[1] ? seasonEndData.drivers[1].pts + ' pts' : '' }}</span>
+                                <span v-if="seasonEndData.drivers[1] && seasonEndData.drivers[1].is_user" class="inline-block mt-0.5 text-[8px] font-black uppercase bg-yellow-400 text-slate-950 px-1 rounded">YOU</span>
+                            </div>
+                            <div class="podium-step-2 w-full h-24 sm:h-32 rounded-t-2xl flex items-center justify-center text-2xl sm:text-4xl font-black text-slate-900 mono">
+                                2
+                            </div>
+                        </div>
+
+                        <!-- P1 Step (Gold - Champion) -->
+                        <div class="flex-1 max-w-[190px] flex flex-col items-center -mt-6">
+                            <div class="text-2xl sm:text-3xl mb-1 animate-bounce">👑</div>
+                            <div class="text-center mb-2 px-1">
+                                <span class="text-yellow-400 text-[10px] font-mono font-bold block uppercase">🏆 World Champion</span>
+                                <h4 class="font-black text-white text-sm sm:text-base truncate w-full">{{ seasonEndData.drivers[0] ? seasonEndData.drivers[0].name : '' }}</h4>
+                                <span class="text-xs font-mono font-bold text-yellow-400">{{ seasonEndData.drivers[0] ? seasonEndData.drivers[0].pts + ' pts' : '' }}</span>
+                                <span v-if="seasonEndData.drivers[0] && seasonEndData.drivers[0].is_user" class="inline-block mt-0.5 text-[9px] font-black uppercase bg-yellow-400 text-slate-950 px-1.5 rounded">YOU</span>
+                            </div>
+                            <div class="podium-step-1 w-full h-32 sm:h-44 rounded-t-2xl flex items-center justify-center text-4xl sm:text-6xl font-black text-slate-950 mono">
+                                1
+                            </div>
+                        </div>
+
+                        <!-- P3 Step (Bronze) -->
+                        <div class="flex-1 max-w-[170px] flex flex-col items-center">
+                            <div class="text-center mb-2 px-1">
+                                <span class="text-amber-500 text-[10px] font-mono block">P3 BRONZE</span>
+                                <h4 class="font-bold text-white text-xs sm:text-sm truncate w-full">{{ seasonEndData.drivers[2] ? seasonEndData.drivers[2].name : '' }}</h4>
+                                <span class="text-[10px] font-mono text-slate-400">{{ seasonEndData.drivers[2] ? seasonEndData.drivers[2].pts + ' pts' : '' }}</span>
+                                <span v-if="seasonEndData.drivers[2] && seasonEndData.drivers[2].is_user" class="inline-block mt-0.5 text-[8px] font-black uppercase bg-yellow-400 text-slate-950 px-1 rounded">YOU</span>
+                            </div>
+                            <div class="podium-step-3 w-full h-16 sm:h-24 rounded-t-2xl flex items-center justify-center text-xl sm:text-3xl font-black text-slate-950 mono">
+                                3
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🎖️ YOUR TEAM'S OFFICIAL SEASON REPORT CARD -->
+                <div class="bg-gradient-to-r from-red-950/70 via-slate-900 to-slate-900 border-2 border-yellow-500/60 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+                        <div>
+                            <span class="text-[10px] font-mono text-yellow-400 uppercase tracking-widest font-bold">Your Season Grade & Analysis</span>
+                            <h3 class="text-2xl sm:text-3xl font-black text-white uppercase">{{ userTeam ? userTeam.name : 'Your Team' }}</h3>
+                            <p class="text-xs text-slate-300 mt-0.5">Constructor Rank: <b class="text-yellow-400">P{{ seasonEndData.user_team_pos }}</b> &bull; Best Driver: <b class="text-green-400">P{{ seasonEndData.user_best_pos }} WDC</b></p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-slate-950 border border-yellow-500/40 px-4 py-2 rounded-2xl text-center">
+                                <span class="text-[9px] text-slate-400 uppercase font-mono block">Season Rating</span>
+                                <span class="text-2xl font-black mono text-yellow-400">
+                                    {{ seasonEndData.user_best_pos === 1 ? 'A+' : (seasonEndData.user_team_pos <= 3 ? 'A' : (seasonEndData.user_team_pos <= 5 ? 'B+' : 'B')) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Highlights Breakdown -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono text-xs">
+                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">TOTAL WCC POINTS</span>
+                            <span class="text-xl font-bold text-white">{{ seasonEndData.user_team_pts }}</span>
+                        </div>
+                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">CONSTRUCTOR FINISH</span>
+                            <span class="text-xl font-bold text-yellow-400">P{{ seasonEndData.user_team_pos }}</span>
+                        </div>
+                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">LEAD DRIVER FINISH</span>
+                            <span class="text-xl font-bold text-green-400">P{{ seasonEndData.user_best_pos }}</span>
+                        </div>
+                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                            <span class="text-slate-500 block text-[10px]">ACCOLADE</span>
+                            <span class="text-xs font-bold text-cyan-400 block mt-1">
+                                {{ seasonEndData.user_best_pos === 1 ? 'WORLD CHAMPION' : (seasonEndData.user_team_pos <= 3 ? 'PODIUM REGULARS' : 'COMPETITIVE RACER') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📋 FULL TABLES WITH TAB SELECTOR (MOBILE FRIENDLY) -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+                    <!-- Tab Switcher -->
+                    <div class="flex border-b border-slate-800 pb-3 gap-2">
+                        <button @click="endTableTab = 'wdc'" 
+                                :class="endTableTab === 'wdc' ? 'bg-red-600 text-white font-bold' : 'bg-slate-950 text-slate-400 hover:text-white'"
+                                class="flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition font-mono">
+                            🏎️ Drivers (WDC)
+                        </button>
+                        <button @click="endTableTab = 'wcc'" 
+                                :class="endTableTab === 'wcc' ? 'bg-red-600 text-white font-bold' : 'bg-slate-950 text-slate-400 hover:text-white'"
+                                class="flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition font-mono">
+                            🏆 Constructors (WCC)
+                        </button>
+                        <button v-if="latestRace" @click="endTableTab = 'last_race'" 
+                                :class="endTableTab === 'last_race' ? 'bg-red-600 text-white font-bold' : 'bg-slate-950 text-slate-400 hover:text-white'"
+                                class="flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition font-mono truncate">
+                            🏁 Final Race
+                        </button>
+                    </div>
+
+                    <!-- Drivers Table -->
+                    <div v-if="endTableTab === 'wdc'" class="space-y-1 font-mono text-xs max-h-96 overflow-y-auto pr-1">
+                        <div v-for="d in seasonEndData.drivers" :key="d.pos"
+                             :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
+                             class="flex items-center justify-between px-3 py-2 rounded-xl border">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="w-5 font-bold" :class="d.pos <= 3 ? 'text-yellow-400' : 'text-slate-500'">{{ d.pos }}.</span>
+                                <span class="truncate">{{ d.name }}</span>
+                                <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black shrink-0">YOU</span>
+                            </div>
+                            <div class="flex items-center space-x-3 shrink-0">
+                                <span class="text-slate-500 text-[11px] hidden sm:inline">{{ d.wins }}W &bull; {{ d.podiums }}Pod</span>
+                                <span class="font-bold text-white w-14 text-right">{{ d.pts }} pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Constructors Table -->
+                    <div v-if="endTableTab === 'wcc'" class="space-y-1 font-mono text-xs max-h-96 overflow-y-auto pr-1">
+                        <div v-for="t in seasonEndData.constructors" :key="t.pos"
+                             :class="t.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
+                             class="flex items-center justify-between px-3 py-2 rounded-xl border">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="w-5 font-bold" :class="t.pos <= 3 ? 'text-yellow-400' : 'text-slate-500'">{{ t.pos }}.</span>
+                                <span class="truncate">{{ t.name }}</span>
+                                <span v-if="t.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black shrink-0">YOU</span>
+                            </div>
+                            <span class="font-bold text-white shrink-0">{{ t.pts }} pts</span>
+                        </div>
+                    </div>
+
+                    <!-- Optional Final Race Table -->
+                    <div v-if="endTableTab === 'last_race' && latestRace" class="space-y-2 font-mono text-xs max-h-96 overflow-y-auto pr-1">
+                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                            <span class="text-slate-400 font-bold uppercase truncate mr-2">{{ latestRace.track }} (Round {{ latestRace.round }})</span>
+                            <span class="text-green-400 font-bold shrink-0">Winner: {{ latestRace.chequered_flag.winner }}</span>
+                        </div>
+                        <div v-for="d in latestRace.chequered_flag.top10" :key="d.pos"
+                             :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
+                             class="flex items-center justify-between px-3 py-1.5 rounded-xl border">
+                            <div class="flex items-center space-x-2 truncate">
+                                <span class="w-5 font-bold" :class="d.pos === 1 ? 'text-yellow-400' : 'text-slate-500'">P{{ d.pos }}</span>
+                                <span class="truncate">{{ d.name }}</span>
+                                <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black shrink-0">YOU</span>
+                                <span v-if="d.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded font-black shrink-0">FL</span>
+                            </div>
+                            <span class="text-green-400 font-bold shrink-0">+{{ d.pts }} pts</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Play Again Button -->
+                <button @click="resetToConfig" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl uppercase tracking-widest text-sm transition active:scale-98 shadow-xl">
+                    Draft Another Season ↺
+                </button>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- LIVE STANDINGS POPUP (RESPONSIVE) -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <div v-if="showStandingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                        <h3 class="font-black uppercase text-white tracking-wider text-sm sm:text-base">Live Telemetry Standings</h3>
+                        <button @click="showStandingsModal = false" class="text-slate-400 hover:text-white font-bold text-xl px-2">&times;</button>
+                    </div>
+
+                    <div v-if="liveStandings" class="space-y-4 font-mono text-xs">
+                        <div>
+                            <h4 class="text-slate-400 uppercase tracking-widest text-[10px] mb-1.5 font-bold">Top Drivers (WDC)</h4>
+                            <div class="space-y-1">
+                                <div v-for="d in liveStandings.drivers.slice(0, 10)" :key="d.pos"
+                                     :class="d.is_user ? 'bg-yellow-500/20 text-yellow-300 font-bold' : 'text-slate-300'"
+                                     class="flex justify-between px-2.5 py-1.5 rounded bg-slate-950/60">
+                                    <span class="truncate">{{ d.pos }}. {{ d.name }}</span>
+                                    <span class="shrink-0">{{ d.pts }} pts</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-slate-400 uppercase tracking-widest text-[10px] mb-1.5 font-bold">Constructors (WCC)</h4>
+                            <div class="space-y-1">
+                                <div v-for="t in liveStandings.constructors" :key="t.pos"
+                                     :class="t.is_user ? 'bg-yellow-500/20 text-yellow-300 font-bold' : 'text-slate-300'"
+                                     class="flex justify-between px-2.5 py-1.5 rounded bg-slate-950/60">
+                                    <span class="truncate">{{ t.pos }}. {{ t.name }}</span>
+                                    <span class="shrink-0">{{ t.pts }} pts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="text-center py-6 text-slate-400 font-mono text-xs">
+                        Fetching live telemetry...
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        // Web Audio Synthesizer Fanfare for Grand Finale
+        function playVictoryFanfare() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [
+                    { f: 523.25, d: 0.18, t: 0.0 },  // C5
+                    { f: 659.25, d: 0.18, t: 0.18 }, // E5
+                    { f: 783.99, d: 0.18, t: 0.36 }, // G5
+                    { f: 1046.50, d: 0.55, t: 0.54 } // C6
+                ];
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.t);
+                    gain.gain.setValueAtTime(0.18, ctx.currentTime + n.t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.t + n.d);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + n.t);
+                    osc.stop(ctx.currentTime + n.t + n.d);
+                });
+            } catch (e) {
+                // AudioContext blocked or unsupported, silent fallback
+            }
+        }
+
+        createApp({
+            data() {
+                return {
+                    phase: 'config',
+                    config: {
+                        mode: 'pack',
+                        era: 'mixed',
+                        parity: 0.45
+                    },
+                    eras: [
+                        { id: 'current', name: 'Current Grid' },
+                        { id: 'legends', name: 'Era Legends' },
+                        { id: 'mixed', name: 'All Cards (Mixed)' }
+                    ],
+                    draftStep: 1,
+                    picks: {
+                        driver1: null,
+                        driver2: null,
+                        constructor: null,
+                        principal: null
+                    },
+                    cards: [],
+                    loadingCards: false,
+                    searchQuery: '',
+
+                    sessionId: null,
+                    userTeam: null,
+                    fullGrid: [],
+                    totalRaces: 24,
+
+                    ws: null,
+                    currentRound: 0,
+                    latestRace: null,
+                    isAutoRunning: false,
+                    showStandingsModal: false,
+                    liveStandings: null,
+
+                    summerBreakPrompt: null,
+                    summerBreakProcessing: false,
+                    summerBreakResult: null,
+
+                    seasonEndData: null,
+                    endTableTab: 'wdc'
+                }
+            },
+            computed: {
+                currentStepTitle() {
+                    if (this.draftStep === 1) return "Draft Driver 1";
+                    if (this.draftStep === 2) return "Draft Driver 2";
+                    if (this.draftStep === 3) return "Draft Machinery";
+                    return "Draft Team Principal";
+                },
+                filteredCards() {
+                    if (this.config.mode === 'pack' || !this.searchQuery) return this.cards;
+                    const q = this.searchQuery.toLowerCase();
+                    return this.cards.filter(c => 
+                        (c.name && c.name.toLowerCase().includes(q)) ||
+                        (c.team && c.team.toLowerCase().includes(q)) ||
+                        (c.year && c.year.toString().includes(q))
+                    );
+                }
+            },
+            methods: {
+                startDraftPhase() {
+                    this.phase = 'draft';
+                    this.draftStep = 1;
+                    this.picks = { driver1: null, driver2: null, constructor: null, principal: null };
+                    this.loadDraftCards();
+                },
+                async loadDraftCards() {
+                    this.loadingCards = true;
+                    try {
+                        const res = await fetch('/draft/cards', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                step: this.draftStep,
+                                mode: this.config.mode,
+                                era: this.config.era,
+                                d1: this.picks.driver1,
+                                d2: this.picks.driver2,
+                                constructor: this.picks.constructor
+                            })
+                        });
+                        const data = await res.json();
+                        this.cards = data.cards;
+                    } catch (e) {
+                        console.error("Error loading cards:", e);
+                    } finally {
+                        this.loadingCards = false;
+                    }
+                },
+                formatPickName(key) {
+                    if (!key) return '';
+                    if (key.includes('|')) {
+                        const [base, yr] = key.split('|');
+                        return `${base} (${yr})`;
+                    }
+                    return key;
+                },
+                async selectCard(card) {
+                    if (card.blocked) return;
+
+                    if (this.draftStep === 1) {
+                        this.picks.driver1 = card.key;
+                        this.draftStep = 2;
+                        await this.loadDraftCards();
+                    } else if (this.draftStep === 2) {
+                        this.picks.driver2 = card.key;
+                        this.draftStep = 3;
+                        await this.loadDraftCards();
+                    } else if (this.draftStep === 3) {
+                        this.picks.constructor = card.key;
+                        this.draftStep = 4;
+                        await this.loadDraftCards();
+                    } else if (this.draftStep === 4) {
+                        this.picks.principal = card.key;
+                        await this.submitDraftPicks();
+                    }
+                },
+                async submitDraftPicks() {
+                    try {
+                        const res = await fetch('/draft/submit', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                ...this.picks,
+                                parity: this.config.parity
+                            })
+                        });
+                        const data = await res.json();
+                        this.sessionId = data.session_id;
+                        this.userTeam = data.user_team;
+                        this.fullGrid = data.grid;
+                        this.totalRaces = data.total_races;
+                        this.phase = 'reveal';
+                    } catch (e) {
+                        console.error("Submit error:", e);
+                    }
+                },
+                connectSimulationSocket() {
+                    this.phase = 'sim';
+                    this.currentRound = 0;
+                    this.latestRace = null;
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    this.ws = new WebSocket(`${protocol}//${window.location.host}/stream/${this.sessionId}`);
+
+                    this.ws.onmessage = (event) => {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'race_result') {
+                            this.latestRace = msg.data;
+                            this.currentRound = msg.data.round;
+                        } else if (msg.type === 'summer_break_prompt') {
+                            this.summerBreakPrompt = msg.data;
+                            this.isAutoRunning = false;
+                        } else if (msg.type === 'summer_break_result') {
+                            this.summerBreakProcessing = false;
+                            this.summerBreakPrompt = null;
+                            this.summerBreakResult = msg.data;
+                        } else if (msg.type === 'current_standings') {
+                            this.liveStandings = msg;
+                        } else if (msg.type === 'season_end') {
+                            this.phase = 'ended';
+                            this.seasonEndData = msg.data;
+                            this.isAutoRunning = false;
+                            playVictoryFanfare();
+                            if (window.confetti) {
+                                confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
+                                setTimeout(() => {
+                                    confetti({ particleCount: 80, angle: 60, spread: 55, origin: { x: 0 } });
+                                    confetti({ particleCount: 80, angle: 120, spread: 55, origin: { x: 1 } });
+                                }, 400);
+                            }
+                        }
+                    };
+                },
+                stepNextRace() {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ action: "next_race" }));
+                    }
+                },
+                startAutoPlay() {
+                    this.isAutoRunning = true;
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ action: "auto_play", delay: 1.2 }));
+                    }
+                },
+                pauseAutoPlay() {
+                    this.isAutoRunning = false;
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({ action: "pause" }));
+                    }
+                },
+                submitSummerBreak(choice, subChoice = null) {
+                    this.summerBreakProcessing = true;
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(JSON.stringify({
+                            action: "summer_break",
+                            choice: choice,
+                            sub_choice: subChoice
+                        }));
+                    }
+                },
+                resetToConfig() {
+                    this.phase = 'config';
+                    this.seasonEndData = null;
+                    this.latestRace = null;
+                    this.userTeam = null;
+                    if (this.ws) {
+                        this.ws.close();
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
