@@ -1,2 +1,13 @@
-/datasets/
+/datasets/*
 /__pycache__/
+
+# Runtime data required by the deployed API; keep training datasets ignored.
+!/datasets/
+!/datasets/races.csv
+!/datasets/results.csv
+!/datasets/drivers.csv
+!/datasets/constructors.csv
+!/datasets/driver_standings.csv
+!/datasets/constructor_standings.csv
+!/datasets/circuits.csv
+!/datasets/sprint_results.csv
