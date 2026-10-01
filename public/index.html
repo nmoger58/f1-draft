@@ -928,71 +928,226 @@
             <!-- STAGE 4: SUMMER BREAK MODAL -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <div v-if="summerBreakPrompt" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md">
-                <div class="bg-slate-900 border-2 border-yellow-500 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
-                    <div class="text-center space-y-1">
-                        <span class="bg-yellow-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-widest font-mono">
-                            Round {{ summerBreakPrompt.round }} &bull; Factory Shutdown
-                        </span>
-                        <h2 class="text-xl sm:text-2xl font-black uppercase text-white tracking-wide">F1 Summer Break Decisions</h2>
-                        <p class="text-slate-400 text-xs">Choose whether to lock your setup or take strategic risks for the final stint.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono">
-                        <div class="border border-green-500/30 bg-green-500/10 p-2.5 rounded-lg">
-                            <span class="text-[9px] text-green-400 uppercase font-bold block">Top Driver</span>
-                            <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.best_driver.name }}</div>
-                            <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.best_driver.pos }} WDC &bull; {{ summerBreakPrompt.best_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.best_driver.rating }}</b></div>
+                <div class="bg-slate-900 border-2 border-yellow-500 rounded-2xl sm:rounded-3xl p-4 sm:p-7 max-w-lg w-full shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
+                    
+                    <!-- MENU VIEW: STRATEGIC OPTIONS -->
+                    <template v-if="summerBreakView === 'menu'">
+                        <div class="text-center space-y-1">
+                            <span class="bg-yellow-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-widest font-mono">
+                                Round {{ summerBreakPrompt.round }} &bull; Factory Shutdown
+                            </span>
+                            <h2 class="text-xl sm:text-2xl font-black uppercase text-white tracking-wide">F1 Summer Break Decisions</h2>
+                            <p class="text-slate-400 text-xs">Choose whether to lock your setup or take strategic risks with the Spin The Wheel arena!</p>
                         </div>
-                        <div class="border border-red-500/30 bg-red-500/10 p-2.5 rounded-lg">
-                            <span class="text-[9px] text-red-400 uppercase font-bold block">Trailing Driver</span>
-                            <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.worst_driver.name }}</div>
-                            <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.worst_driver.pos }} WDC &bull; {{ summerBreakPrompt.worst_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.worst_driver.rating }}</b></div>
+
+                        <!-- Current Team Status -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono">
+                            <div class="border border-green-500/30 bg-green-500/10 p-2.5 rounded-lg">
+                                <span class="text-[9px] text-green-400 uppercase font-bold block">Top Driver</span>
+                                <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.best_driver.name }}</div>
+                                <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.best_driver.pos }} WDC &bull; {{ summerBreakPrompt.best_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.best_driver.rating }}</b></div>
+                            </div>
+                            <div class="border border-red-500/30 bg-red-500/10 p-2.5 rounded-lg">
+                                <span class="text-[9px] text-red-400 uppercase font-bold block">Trailing Driver</span>
+                                <div class="font-bold text-white text-sm truncate">{{ summerBreakPrompt.worst_driver.name }}</div>
+                                <div class="text-slate-400 text-[11px]">P{{ summerBreakPrompt.worst_driver.pos }} WDC &bull; {{ summerBreakPrompt.worst_driver.pts }} pts &bull; <b class="text-white">OVR {{ summerBreakPrompt.worst_driver.rating }}</b></div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div v-if="!summerBreakProcessing" class="space-y-2 text-left">
-                        <button @click="submitSummerBreak(1)" 
-                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 transition card-active">
-                            <div class="font-bold text-white text-xs">Option 1: Continue With Existing Lineup</div>
-                            <div class="text-[11px] text-slate-400">Zero modifications. Keep current ratings and points intact.</div>
-                        </button>
+                        <div v-if="!summerBreakProcessing" class="space-y-2 text-left">
+                            <button @click="submitSummerBreak(1)" 
+                                    class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 transition card-active">
+                                <div class="font-bold text-white text-xs">Option 1: Continue With Existing Lineup</div>
+                                <div class="text-[11px] text-slate-400">Zero modifications. Keep current driver ratings and points intact.</div>
+                            </button>
 
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono pt-1">Strategic Upgrades & Risks:</div>
+                            <div class="text-[10px] font-bold text-yellow-400 uppercase tracking-widest font-mono pt-1 flex items-center space-x-1.5">
+                                <span>🎡</span> <span>Spin The Wheel Upgrades & Risks:</span>
+                            </div>
 
-                        <button @click="submitSummerBreak(2, 1)" 
-                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-green-500 transition card-active">
-                            <div class="font-bold text-green-400 text-xs">Option 2A: Driver Focus (Wheel 1-7 OVR Swap)</div>
-                            <div class="text-[11px] text-slate-400">Spin wheel 1-5 (rare 6-7). Deduct from trailing driver and give to top driver.</div>
-                        </button>
+                            <button @click="openWheel(1)" 
+                                    class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-green-500 transition card-active flex items-center justify-between group">
+                                <div class="space-y-0.5">
+                                    <div class="font-bold text-green-400 text-xs flex items-center space-x-1.5">
+                                        <span>Option 2A: Driver Focus (Wheel 1–7 OVR Swap)</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400">Spin the wheel (1–7). Transfer rating from trailing driver to top driver.</div>
+                                </div>
+                                <span class="text-2xl group-hover:scale-125 transition-transform duration-200">🎡</span>
+                            </button>
 
-                        <button @click="submitSummerBreak(2, 2)" 
-                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-yellow-500 transition card-active">
-                            <div class="font-bold text-yellow-400 text-xs">Option 2B: Car Focus (Points for Upgrades)</div>
-                            <div class="text-[11px] text-slate-400">Sacrifice 10-100 season points from trailing driver for +1 to +10 Car OVR!</div>
-                        </button>
+                            <button @click="openWheel(2)" 
+                                    class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-yellow-500 transition card-active flex items-center justify-between group">
+                                <div class="space-y-0.5">
+                                    <div class="font-bold text-yellow-400 text-xs flex items-center space-x-1.5">
+                                        <span>Option 2B: Car Focus (Points for Upgrades)</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400">Sacrifice 10–100 season points from trailing driver for +1 to +10 Car OVR!</div>
+                                </div>
+                                <span class="text-2xl group-hover:scale-125 transition-transform duration-200">🏎️</span>
+                            </button>
 
-                        <button @click="submitSummerBreak(2, 3)" 
-                                class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-red-500 transition card-active">
-                            <div class="font-bold text-red-400 text-xs">Option 2C: Take The Risk (Grid Roulette)</div>
-                            <div class="text-[11px] text-slate-400">Spin against rival. Above your top driver = +10 to +1 OVR. Below = -1, -2 loss!</div>
-                        </button>
-                    </div>
+                            <button @click="openWheel(3)" 
+                                    class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-red-500 transition card-active flex items-center justify-between group">
+                                <div class="space-y-0.5">
+                                    <div class="font-bold text-red-400 text-xs flex items-center space-x-1.5">
+                                        <span>Option 2C: Take The Risk (Grid Roulette)</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400">Spin against rival. Above your top driver = +10 to +1 OVR. Below = -1, -2 loss!</div>
+                                </div>
+                                <span class="text-2xl group-hover:scale-125 transition-transform duration-200">🎰</span>
+                            </button>
+                        </div>
 
-                    <div v-else class="text-center py-6 space-y-2">
-                        <div class="inline-block animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
-                        <p class="text-xs font-mono text-yellow-400 font-bold uppercase tracking-wider">Simulating Wheel Decision...</p>
-                    </div>
+                        <div v-else class="text-center py-6 space-y-2">
+                            <div class="inline-block animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+                            <p class="text-xs font-mono text-yellow-400 font-bold uppercase tracking-wider">Confirming Lineup Choice...</p>
+                        </div>
+                    </template>
+
+                    <!-- 🎡 WHEEL ARENA VIEW: SPIN THE WHEEL ANIMATION -->
+                    <template v-else-if="summerBreakView === 'wheel'">
+                        <!-- Header with Back Button -->
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                            <button v-if="!wheelSpinning && !wheelLanded" @click="summerBreakView = 'menu'" 
+                                    class="text-xs font-mono text-slate-400 hover:text-white flex items-center space-x-1 transition px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">
+                                <span>←</span> <span>Back</span>
+                            </button>
+                            <span v-else class="text-[10px] font-mono font-bold uppercase text-yellow-400 tracking-wider">⚡ WHEEL ACTIVE</span>
+
+                            <span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-bold">
+                                Round {{ summerBreakPrompt.round }} Break
+                            </span>
+                        </div>
+
+                        <div class="text-center space-y-1">
+                            <h3 class="text-lg sm:text-xl font-black uppercase text-white tracking-wide flex items-center justify-center space-x-2">
+                                <span>🎡</span> <span>{{ activeWheelTitle }}</span>
+                            </h3>
+                            <p class="text-slate-400 text-xs max-w-sm mx-auto leading-relaxed">{{ activeWheelDesc }}</p>
+                        </div>
+
+                        <!-- Interactive Spinning Wheel Canvas/SVG -->
+                        <div class="relative mx-auto flex items-center justify-center my-3 w-[270px] h-[270px] sm:w-[330px] sm:h-[330px]">
+                            <!-- Flapper Stopper Needle at 12 o'clock -->
+                            <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-transform duration-75 origin-top"
+                                 :style="{ transform: 'translateX(-50%) ' + (needleTick ? 'rotate(-18deg)' : 'rotate(0deg)') }">
+                                <svg width="32" height="40" viewBox="0 0 32 40" fill="none" class="filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+                                    <polygon points="16,38 3,8 29,8" fill="url(#needleGrad)" stroke="#fef08a" stroke-width="2" stroke-linejoin="round"/>
+                                    <circle cx="16" cy="8" r="6" fill="#0f172a" stroke="#eab308" stroke-width="2.5"/>
+                                    <circle cx="16" cy="8" r="2.5" fill="#fef08a"/>
+                                    <defs>
+                                        <linearGradient id="needleGrad" x1="3" y1="8" x2="29" y2="38" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#ef4444"/>
+                                            <stop offset="1" stop-color="#b91c1c"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+
+                            <!-- Spinning Wheel SVG Body -->
+                            <svg viewBox="-160 -160 320 320" 
+                                 class="w-full h-full filter drop-shadow-[0_0_25px_rgba(234,179,8,0.35)] select-none"
+                                 :style="{ transform: 'rotate(' + wheelRotation + 'deg)', transition: wheelTransitionStyle }">
+                                <!-- Outer rim -->
+                                <circle cx="0" cy="0" r="146" fill="none" stroke="#eab308" stroke-width="7" />
+                                <circle cx="0" cy="0" r="151" fill="none" stroke="#0f172a" stroke-width="4" />
+                                <circle cx="0" cy="0" r="154" fill="none" stroke="#eab308" stroke-width="1.5" opacity="0.6" />
+
+                                <!-- Wheel Slices -->
+                                <g v-for="(slice, sIdx) in activeWheelSlices" :key="'slice-' + sIdx"
+                                   :transform="'rotate(' + (sIdx * 360 / activeWheelSlices.length) + ')'">
+                                    <!-- Slice Wedge -->
+                                    <path :d="getWedgePath(activeWheelSlices.length)" 
+                                          :fill="slice.color" 
+                                          stroke="#0f172a" 
+                                          stroke-width="2" />
+                                    
+                                    <!-- Slice Text Content: Driver Focus (1-7) -->
+                                    <template v-if="activeWheelSubChoice === 1">
+                                        <text x="0" y="-86" text-anchor="middle" class="font-mono font-black text-xl fill-white select-none drop-shadow">{{ slice.val }}</text>
+                                        <text x="0" y="-68" text-anchor="middle" class="font-mono font-bold text-[8px] fill-white/90 uppercase tracking-widest select-none">{{ slice.sublabel }}</text>
+                                    </template>
+
+                                    <!-- Slice Text Content: Car Focus (10-100 pts) -->
+                                    <template v-else-if="activeWheelSubChoice === 2">
+                                        <text x="0" y="-90" text-anchor="middle" class="font-mono font-black text-xs fill-white select-none drop-shadow">{{ slice.val }}</text>
+                                        <text x="0" y="-74" text-anchor="middle" class="font-mono font-bold text-[8px] fill-white/80 uppercase select-none">{{ slice.sublabel }}</text>
+                                    </template>
+
+                                    <!-- Slice Text Content: Grid Roulette (Rival Drivers) -->
+                                    <template v-else-if="activeWheelSubChoice === 3">
+                                        <text x="0" y="-84" text-anchor="middle" transform="rotate(90, 0, -84)" 
+                                              class="font-mono font-black text-[9px] fill-white select-none drop-shadow">
+                                            P{{ slice.pos }} {{ slice.short_name }}
+                                        </text>
+                                    </template>
+                                </g>
+
+                                <!-- Perimeter Rivet Pegs (24 Pegs) -->
+                                <circle v-for="peg in 24" :key="'peg-'+peg" 
+                                        :cx="146 * Math.sin(peg * 15 * Math.PI / 180)" 
+                                        :cy="-146 * Math.cos(peg * 15 * Math.PI / 180)" 
+                                        r="2.5" fill="#fef08a" stroke="#0f172a" stroke-width="0.8" />
+
+                                <!-- Center Hub -->
+                                <circle cx="0" cy="0" r="32" fill="#0f172a" stroke="#eab308" stroke-width="4" class="drop-shadow-lg" />
+                                <circle cx="0" cy="0" r="22" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+                                <text x="0" y="4" text-anchor="middle" class="font-mono font-black text-[12px] fill-yellow-400 select-none">F1</text>
+                            </svg>
+                        </div>
+
+                        <!-- Action Button / Spinning Status / Result Reveal -->
+                        <div class="space-y-2">
+                            <!-- Tap to Spin Button -->
+                            <button v-if="!wheelSpinning && !wheelLanded" @click="spinCurrentWheel" 
+                                    class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 text-slate-950 font-black uppercase text-sm tracking-widest shadow-2xl hover:brightness-110 active:scale-95 transition transform flex items-center justify-center space-x-2 cursor-pointer border border-yellow-300">
+                                <span>🎰</span>
+                                <span>SPIN THE WHEEL!</span>
+                            </button>
+
+                            <!-- In-Motion Spinning Banner -->
+                            <div v-else-if="wheelSpinning" class="text-center py-3 flex items-center justify-center space-x-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+                                <div class="w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                                <span class="font-mono text-xs font-bold text-yellow-400 uppercase tracking-widest animate-pulse">WHEEL IS SPINNING... GOOD LUCK!</span>
+                            </div>
+
+                            <!-- Landed Result Card -->
+                            <div v-else-if="wheelLanded && summerBreakResult" class="bg-gradient-to-b from-slate-950 to-slate-900 border-2 border-green-500/80 rounded-2xl p-4 text-center space-y-3 shadow-2xl">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <span class="text-2xl">🎉</span>
+                                    <h4 class="text-base sm:text-lg font-black uppercase text-white tracking-wide">{{ summerBreakResult.headline }}</h4>
+                                </div>
+                                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">{{ summerBreakResult.message }}</p>
+
+                                <div v-if="summerBreakResult.best_rating" class="flex items-center justify-center space-x-3 text-xs font-mono py-1">
+                                    <span class="text-green-400 font-bold">{{ summerBreakPrompt.best_driver.name }}: OVR {{ summerBreakResult.best_rating }}</span>
+                                    <span class="text-slate-600">&bull;</span>
+                                    <span class="text-red-400 font-bold">{{ summerBreakPrompt.worst_driver.name }}: OVR {{ summerBreakResult.worst_rating }}</span>
+                                </div>
+
+                                <div v-if="summerBreakResult.new_car_rating" class="text-xs font-mono text-yellow-400 font-bold py-1">
+                                    New Car Performance: OVR {{ summerBreakResult.new_car_rating }}
+                                </div>
+
+                                <button @click="closeSummerBreak" 
+                                        class="w-full py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-black uppercase tracking-wider text-xs shadow-lg transition">
+                                    ACCEPT & RESUME TO ROUND {{ (summerBreakPrompt ? summerBreakPrompt.round + 1 : 12) }} ➔
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
 
-            <!-- Summer Break Result Popup -->
-            <div v-if="summerBreakResult" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+            <!-- Summer Break Result Popup (For Option 1 / No Changes) -->
+            <div v-if="summerBreakResult && summerBreakView === 'menu'" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
                 <div class="bg-slate-900 border-2 border-green-500 rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
-                    <span class="text-4xl">🎰</span>
+                    <span class="text-4xl">🛡️</span>
                     <h3 class="text-xl font-black uppercase text-white tracking-wide">{{ summerBreakResult.headline }}</h3>
                     <p class="text-slate-300 text-xs leading-relaxed">{{ summerBreakResult.message }}</p>
-                    <button @click="summerBreakResult = null" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-xs transition">
-                        Resume To Round 13 ➔
+                    <button @click="closeSummerBreak" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-xl uppercase tracking-wider text-xs transition">
+                        Resume To Round {{ (summerBreakPrompt ? summerBreakPrompt.round + 1 : 12) }} ➔
                     </button>
                 </div>
             </div>
@@ -1284,6 +1439,31 @@
             } catch (e) {}
         }
 
+        function playWheelTick() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(560 + Math.random() * 90, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.035);
+            } catch (e) {}
+        }
+
+        function playWheelWin() {
+            try {
+                playVictoryFanfare();
+                if (window.confetti) {
+                    confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 } });
+                }
+            } catch (e) {}
+        }
+
         createApp({
             data() {
                 return {
@@ -1330,6 +1510,16 @@
                     summerBreakPrompt: null,
                     summerBreakProcessing: false,
                     summerBreakResult: null,
+                    summerBreakView: 'menu',
+                    activeWheelSubChoice: 1,
+                    activeWheelTitle: '',
+                    activeWheelDesc: '',
+                    activeWheelSlices: [],
+                    wheelRotation: 0,
+                    wheelTransitionStyle: 'none',
+                    wheelSpinning: false,
+                    wheelLanded: false,
+                    needleTick: false,
 
                     seasonEndData: null,
                     endTableTab: 'wdc'
@@ -1535,11 +1725,18 @@
                             });
                         } else if (msg.type === 'summer_break_prompt') {
                             this.summerBreakPrompt = msg.data;
+                            this.summerBreakView = 'menu';
+                            this.summerBreakProcessing = false;
+                            this.summerBreakResult = null;
+                            this.wheelSpinning = false;
+                            this.wheelLanded = false;
                             this.isAutoRunning = false;
                         } else if (msg.type === 'summer_break_result') {
                             this.summerBreakProcessing = false;
-                            this.summerBreakPrompt = null;
                             this.summerBreakResult = msg.data;
+                            if (this.summerBreakView === 'wheel') {
+                                this.animateWheelSpin(msg.data);
+                            }
                         } else if (msg.type === 'current_standings') {
                             this.liveStandings = msg;
                         } else if (msg.type === 'season_end') {
@@ -1604,6 +1801,156 @@
                     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
                         this.ws.send(JSON.stringify({ action: "pause" }));
                     }
+                },
+                openWheel(subChoice) {
+                    this.activeWheelSubChoice = subChoice;
+                    this.summerBreakView = 'wheel';
+                    this.wheelSpinning = false;
+                    this.wheelLanded = false;
+                    this.wheelRotation = 0;
+                    this.wheelTransitionStyle = 'none';
+                    this.needleTick = false;
+
+                    if (subChoice === 1) {
+                        // Driver Focus (1-7 OVR Swap)
+                        this.activeWheelTitle = 'Driver Focus OVR Swap';
+                        this.activeWheelDesc = 'Spin the wheel to transfer 1–7 OVR rating from ' + this.summerBreakPrompt.worst_driver.name + ' to ' + this.summerBreakPrompt.best_driver.name + '.';
+                        const colors = ['#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#eab308'];
+                        this.activeWheelSlices = [
+                            { val: '+1', sublabel: 'OVR', color: colors[0] },
+                            { val: '+2', sublabel: 'OVR', color: colors[1] },
+                            { val: '+3', sublabel: 'OVR', color: colors[2] },
+                            { val: '+4', sublabel: 'OVR', color: colors[3] },
+                            { val: '+5', sublabel: 'OVR', color: colors[4] },
+                            { val: '+6', sublabel: 'RARE', color: colors[5] },
+                            { val: '+7', sublabel: 'JACKPOT', color: colors[6] }
+                        ];
+                    } else if (subChoice === 2) {
+                        // Car Focus (Points for Upgrades)
+                        this.activeWheelTitle = 'Car Upgrade Points Sacrifice';
+                        this.activeWheelDesc = 'Sacrifice 10–100 season points from ' + this.summerBreakPrompt.worst_driver.name + ' for +1 to +10 Car OVR.';
+                        const colors = [
+                            '#0ea5e9', '#10b981', '#6366f1', '#8b5cf6', '#ec4899',
+                            '#f43f5e', '#f97316', '#14b8a6', '#a855f7', '#eab308'
+                        ];
+                        this.activeWheelSlices = [
+                            { val: '10 PTS', sublabel: '+1 CAR', color: colors[0] },
+                            { val: '20 PTS', sublabel: '+2 CAR', color: colors[1] },
+                            { val: '30 PTS', sublabel: '+3 CAR', color: colors[2] },
+                            { val: '40 PTS', sublabel: '+4 CAR', color: colors[3] },
+                            { val: '50 PTS', sublabel: '+5 CAR', color: colors[4] },
+                            { val: '60 PTS', sublabel: '+6 CAR', color: colors[5] },
+                            { val: '70 PTS', sublabel: '+7 CAR', color: colors[6] },
+                            { val: '80 PTS', sublabel: '+8 CAR', color: colors[7] },
+                            { val: '90 PTS', sublabel: '+9 CAR', color: colors[8] },
+                            { val: '100 PTS', sublabel: 'JACKPOT', color: colors[9] }
+                        ];
+                    } else if (subChoice === 3) {
+                        // The Risk (Grid Roulette)
+                        this.activeWheelTitle = 'The Grid Roulette';
+                        this.activeWheelDesc = 'Spin against the grid! Draw a driver ranked above ' + this.summerBreakPrompt.best_driver.name + ' for a massive rating surge (+1 to +10 OVR), or lose rating if below!';
+                        const palette = ['#e11d48', '#2563eb', '#059669', '#d97706', '#7c3aed', '#0891b2', '#ea580c', '#4f46e5', '#16a34a', '#db2777'];
+                        if (this.summerBreakPrompt.rivals && this.summerBreakPrompt.rivals.length) {
+                            this.activeWheelSlices = this.summerBreakPrompt.rivals.map((r, i) => ({
+                                code: r.code,
+                                name: r.name,
+                                short_name: r.short_name || r.name.split(' ').slice(-1)[0],
+                                pos: r.pos,
+                                color: r.color || palette[i % palette.length]
+                            }));
+                        } else {
+                            this.activeWheelSlices = [
+                                { pos: 1, short_name: 'VER', color: '#1e40af' },
+                                { pos: 2, short_name: 'NOR', color: '#ea580c' },
+                                { pos: 3, short_name: 'LEC', color: '#dc2626' },
+                                { pos: 4, short_name: 'HAM', color: '#059669' },
+                                { pos: 5, short_name: 'RUS', color: '#0891b2' },
+                                { pos: 6, short_name: 'PIA', color: '#f97316' },
+                                { pos: 7, short_name: 'SAI', color: '#b91c1c' },
+                                { pos: 8, short_name: 'ALO', color: '#047857' }
+                            ];
+                        }
+                    }
+                },
+                getWedgePath(sliceCount) {
+                    const N = sliceCount || 7;
+                    const R = 142;
+                    const halfAngleDeg = (360 / N) / 2;
+                    const halfAngleRad = (halfAngleDeg * Math.PI) / 180;
+                    const x1 = -R * Math.sin(halfAngleRad);
+                    const y1 = -R * Math.cos(halfAngleRad);
+                    const x2 = R * Math.sin(halfAngleRad);
+                    const y2 = -R * Math.cos(halfAngleRad);
+                    return `M 0 0 L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+                },
+                spinCurrentWheel() {
+                    if (this.wheelSpinning) return;
+                    this.wheelSpinning = true;
+                    this.wheelLanded = false;
+                    this.wheelRotation = 0;
+                    this.wheelTransitionStyle = 'none';
+                    this.submitSummerBreak(2, this.activeWheelSubChoice);
+                },
+                animateWheelSpin(resultData) {
+                    let targetIndex = 0;
+                    const slices = this.activeWheelSlices;
+                    const N = slices.length || 7;
+
+                    if (this.activeWheelSubChoice === 1) {
+                        const roll = resultData.roll || 1;
+                        targetIndex = Math.max(0, Math.min(N - 1, roll - 1));
+                    } else if (this.activeWheelSubChoice === 2) {
+                        const roll = resultData.roll || 10;
+                        targetIndex = Math.max(0, Math.min(N - 1, Math.round(roll / 10) - 1));
+                    } else if (this.activeWheelSubChoice === 3) {
+                        const idx = slices.findIndex(s => (resultData.target_code && s.code === resultData.target_code) || s.name === resultData.target);
+                        targetIndex = idx >= 0 ? idx : 0;
+                    }
+
+                    const sliceAngle = 360 / N;
+                    const alignAngle = (360 - (targetIndex * sliceAngle)) % 360;
+                    const jitter = (Math.random() - 0.5) * (sliceAngle * 0.4);
+                    const fullSpins = 6 * 360;
+                    const targetDeg = fullSpins + alignAngle + jitter;
+
+                    setTimeout(() => {
+                        this.wheelTransitionStyle = 'transform 4.5s cubic-bezier(0.12, 0.88, 0.22, 1.0)';
+                        this.wheelRotation = targetDeg;
+                        this.startWheelTicks(4500);
+
+                        setTimeout(() => {
+                            this.wheelSpinning = false;
+                            this.wheelLanded = true;
+                            playWheelWin();
+                        }, 4500);
+                    }, 50);
+                },
+                startWheelTicks(durationMs) {
+                    const intervals = [
+                        50, 50, 50, 60, 60, 70, 75, 80, 90, 100, 
+                        120, 140, 160, 190, 230, 280, 340, 420, 520, 650, 800
+                    ];
+                    let elapsed = 0;
+                    intervals.forEach((delay) => {
+                        elapsed += delay;
+                        if (elapsed < durationMs - 100) {
+                            setTimeout(() => {
+                                if (this.wheelSpinning) {
+                                    playWheelTick();
+                                    this.needleTick = true;
+                                    setTimeout(() => { this.needleTick = false; }, 35);
+                                }
+                            }, elapsed);
+                        }
+                    });
+                },
+                closeSummerBreak() {
+                    this.summerBreakPrompt = null;
+                    this.summerBreakResult = null;
+                    this.summerBreakView = 'menu';
+                    this.wheelSpinning = false;
+                    this.wheelLanded = false;
+                    this.stepNextRace();
                 },
                 submitSummerBreak(choice, subChoice = null) {
                     this.summerBreakProcessing = true;

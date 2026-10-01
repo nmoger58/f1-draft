@@ -886,6 +886,18 @@ async def stream_season(websocket: WebSocket, session_id: str):
                 best_d = u_sorted[0]
                 worst_d = u_sorted[-1]
                 ranked = season.ranked_drivers()
+                others = [d for d in ranked if d != best_d]
+                rivals = [
+                    {
+                        "code": d,
+                        "name": dname(season.drv, d),
+                        "short_name": season.drv[d].get("name", d).split()[-1] if " " in season.drv[d].get("name", d) else season.drv[d].get("name", d),
+                        "pos": ranked.index(d) + 1,
+                        "team": season.team_of.get(d, "Unknown"),
+                        "color": resolve_team_color(season.team_of.get(d, "Unknown"))
+                    }
+                    for d in others
+                ]
 
                 await websocket.send_json({
                     "type": "summer_break_prompt",
@@ -904,7 +916,8 @@ async def stream_season(websocket: WebSocket, session_id: str):
                             "pos": ranked.index(worst_d) + 1,
                             "pts": season.drv_pts[worst_d],
                             "rating": round(season.drv[worst_d]["rating"], 1)
-                        }
+                        },
+                        "rivals": rivals
                     }
                 })
 
@@ -988,6 +1001,7 @@ async def stream_season(websocket: WebSocket, session_id: str):
                                     "choice": 2,
                                     "sub_choice": 3,
                                     "target": target_name,
+                                    "target_code": target_d,
                                     "target_pos": target_pos,
                                     "success": True,
                                     "delta": gain,
@@ -1006,6 +1020,7 @@ async def stream_season(websocket: WebSocket, session_id: str):
                                     "choice": 2,
                                     "sub_choice": 3,
                                     "target": target_name,
+                                    "target_code": target_d,
                                     "target_pos": target_pos,
                                     "success": False,
                                     "delta": -loss,
