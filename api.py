@@ -579,6 +579,18 @@ async def stream_season(websocket: WebSocket, session_id: str):
                 user_best_pos = min(ranked.index(d) + 1 for d in user_ds)
                 user_team_pos = season.ranked_teams().index(user_team_key) + 1
                 
+                user_drivers_summary = [
+                    {
+                        "code": d,
+                        "name": dname(season.drv, d),
+                        "pos": ranked.index(d) + 1,
+                        "pts": season.drv_pts[d],
+                        "wins": season.wins[d],
+                        "podiums": season.podiums[d],
+                    }
+                    for d in user_ds
+                ]
+
                 if user_best_pos == 1:
                     verdict = "CONGRATULATIONS - YOUR DRIVER IS THE 2026 WORLD CHAMPION!"
                 elif user_team_pos == 1:
@@ -596,9 +608,11 @@ async def stream_season(websocket: WebSocket, session_id: str):
                         "champ_driver": champ_driver,
                         "champ_team": champ_team,
                         "champ_pts": season.drv_pts[ranked[0]],
+                        "user_team_name": user_team_key,
                         "user_team_pts": season.team_pts.get(user_team_key, 0),
                         "user_best_pos": user_best_pos,
                         "user_team_pos": user_team_pos,
+                        "user_drivers": user_drivers_summary,
                         "verdict": verdict
                     }
                 })
@@ -770,7 +784,9 @@ async def stream_season(websocket: WebSocket, session_id: str):
 
             # Execute race
             sess["current_race"] += 1
-            race_payload = build_race_payload(sess, sess["current_race"])
+            race_payload = await asyncio.to_thread(
+                build_race_payload, sess, sess["current_race"]
+            )
             await websocket.send_json({
                 "type": "race_result",
                 "data": race_payload

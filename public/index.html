@@ -14,9 +14,7 @@
             --f1-dark: #07090E;
             --f1-card-bg: #111522;
         }
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { -webkit-tap-highlight-color: transparent; }
         body {
             background-color: var(--f1-dark);
             color: #F1F5F9;
@@ -34,22 +32,22 @@
         .rarity-LEGENDARY {
             border-color: #F59E0B;
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(17, 21, 34, 0.96) 60%);
-            box-shadow: 0 0 18px rgba(245, 158, 11, 0.22);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.22);
         }
         .rarity-EPIC {
             border-color: #A855F7;
             background: linear-gradient(135deg, rgba(168, 85, 247, 0.16) 0%, rgba(17, 21, 34, 0.96) 60%);
-            box-shadow: 0 0 16px rgba(168, 85, 247, 0.22);
+            box-shadow: 0 0 14px rgba(168, 85, 247, 0.22);
         }
         .rarity-RARE {
             border-color: #06B6D4;
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(17, 21, 34, 0.96) 60%);
-            box-shadow: 0 0 14px rgba(6, 182, 212, 0.18);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.18);
         }
         .rarity-UNCOMMON {
             border-color: #10B981;
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(17, 21, 34, 0.96) 60%);
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.14);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.14);
         }
         .rarity-COMMON {
             border-color: #475569;
@@ -75,13 +73,11 @@
         .badge-COMMON { background-color: #64748B; color: #FFF; font-weight: 800; }
         .badge-BLOCKED { background-color: #EF4444; color: #FFF; font-weight: 800; }
 
-        .card-active:active:not(.rarity-BLOCKED) {
-            transform: scale(0.97);
-        }
+        .card-active:active:not(.rarity-BLOCKED) { transform: scale(0.97); }
         @media (hover: hover) {
             .card-hover:hover:not(.rarity-BLOCKED) {
-                transform: translateY(-4px) scale(1.02);
-                transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                transform: translateY(-3px) scale(1.015);
+                transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                 filter: brightness(1.15);
             }
         }
@@ -100,7 +96,6 @@
             box-shadow: 0 0 20px rgba(217, 119, 6, 0.25);
         }
         
-        /* Shimmer Gold */
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -113,7 +108,6 @@
             animation: shimmer 3s infinite linear;
         }
 
-        /* Hide scrollbars but keep functionality */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -122,7 +116,7 @@
     <div id="app" class="flex-1 flex flex-col w-full">
 
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-        <!-- TOP F1 NAV BAR (MOBILE-FRIENDLY & RESPONSIVE) -->
+        <!-- TOP F1 NAV BAR -->
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 py-3 sticky top-0 z-50 flex items-center justify-between">
             <div class="flex items-center space-x-2.5 sm:space-x-3.5">
@@ -133,11 +127,11 @@
                     <h1 class="text-base sm:text-xl font-black uppercase tracking-wider text-white leading-tight">
                         DRAFT SIM <span class="text-red-500 font-mono text-sm sm:text-lg">2026</span>
                     </h1>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest hidden sm:block">Balanced Telemetry Edition</p>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest hidden sm:block">Official Telemetry Edition</p>
                 </div>
             </div>
 
-            <!-- Simulation Controls / Status in Header -->
+            <!-- Header Status -->
             <div v-if="phase === 'sim'" class="flex items-center space-x-2 sm:space-x-4 text-xs font-mono">
                 <div class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300">
                     <span class="text-slate-500 mr-1 text-[10px]">R</span>
@@ -164,11 +158,11 @@
             </div>
         </header>
 
-        <!-- MAIN APP CONTENT AREA -->
+        <!-- MAIN CONTAINER -->
         <main class="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-6 flex flex-col justify-start">
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 0: SETUP / CONFIGURATION SCREEN (MOBILE-FIRST) -->
+            <!-- STAGE 0: SETUP / CONFIGURATION SCREEN -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <section v-if="phase === 'config'" class="max-w-2xl mx-auto py-6 sm:py-10 space-y-6 w-full">
                 <div class="text-center space-y-2">
@@ -177,12 +171,11 @@
                     </span>
                     <h2 class="text-2xl sm:text-4xl font-black uppercase text-white tracking-wide">Paddock Protocol</h2>
                     <p class="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
-                        Choose your draft mechanics and competition pool to build your 2026 constructor outfit.
+                        Choose your draft mechanics and driver pool to construct your 2026 racing outfit.
                     </p>
                 </div>
 
                 <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-7 space-y-6 shadow-2xl backdrop-blur">
-                    <!-- Mode Selection -->
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5">1. Draft Format</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -207,7 +200,6 @@
                         </div>
                     </div>
 
-                    <!-- Era Selection -->
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5">2. Driver Pool</label>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -220,7 +212,6 @@
                         </div>
                     </div>
 
-                    <!-- Parity Slider -->
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-xs font-bold uppercase tracking-widest text-slate-400">3. Field Parity</label>
@@ -237,10 +228,10 @@
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 1: DRAFT PHASE (RESPONSIVE FOR ALL SCREEN SIZES) -->
+            <!-- STAGE 1: DRAFT PHASE (COMPACT TELEMETRY CARDS) -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <section v-if="phase === 'draft'" class="space-y-4 sm:space-y-6 w-full">
-                <!-- Stepper & Actions Header -->
+                <!-- Stepper Header -->
                 <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 backdrop-blur">
                     <div>
                         <div class="flex items-center space-x-2 text-xs font-mono mb-1">
@@ -255,7 +246,6 @@
                         </h2>
                     </div>
 
-                    <!-- Pack / Manual Action Controls -->
                     <div class="flex items-center space-x-2">
                         <button v-if="config.mode === 'pack'" @click="loadDraftCards" :disabled="loadingCards"
                                 class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3.5 py-1.5 rounded-lg text-xs uppercase font-bold tracking-wider transition active:scale-95 flex items-center space-x-1.5">
@@ -266,7 +256,7 @@
                     </div>
                 </div>
 
-                <!-- Current Picks Summary Tray (Mobile-First 2x2 grid) -->
+                <!-- Picks Summary Tray -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl">
                     <div class="border border-slate-800/80 rounded-lg p-2 bg-slate-900/50">
                         <div class="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Driver 1</div>
@@ -294,7 +284,7 @@
                     </div>
                 </div>
 
-                <!-- CARDS VIEW (Mobile Responsive Grid / Pack Cards) -->
+                <!-- COMPACT CARDS -->
                 <div v-if="loadingCards" class="py-20 text-center space-y-3">
                     <div class="inline-block animate-spin w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full"></div>
                     <p class="text-xs font-mono uppercase tracking-widest text-slate-400">Dealing Cards...</p>
@@ -309,7 +299,6 @@
                          ]"
                          class="border rounded-xl p-3 flex flex-col justify-between transition-all backdrop-blur-sm select-none">
                         
-                        <!-- Top Header: Year, Rarity & OVR -->
                         <div>
                             <div class="flex items-center justify-between gap-1 mb-1.5">
                                 <div class="flex items-center space-x-1.5">
@@ -327,35 +316,29 @@
                                 </div>
                             </div>
 
-                            <!-- Name & Team -->
                             <div class="mb-2">
                                 <h3 class="font-black text-sm sm:text-base text-white tracking-tight leading-snug truncate">{{ c.name }}</h3>
                                 <p class="text-[11px] text-slate-400 font-medium truncate">{{ c.team || c.code }}</p>
                             </div>
                         </div>
 
-                        <!-- Bottom Stats Line (Compact telemetry chips) -->
                         <div class="pt-1.5 border-t border-slate-800/80">
-                            <!-- Drivers stats -->
                             <div v-if="draftStep <= 2" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
                                 <span>TYR <b class="text-slate-200">{{ c.tyre_z > 0 ? '+' : '' }}{{ c.tyre_z.toFixed(1) }}</b></span>
                                 <span>SPD <b class="text-slate-200">{{ c.top_speed_z > 0 ? '+' : '' }}{{ c.top_speed_z.toFixed(1) }}</b></span>
                                 <span>CON <b class="text-slate-200">{{ c.consistency_z > 0 ? '+' : '' }}{{ c.consistency_z.toFixed(1) }}</b></span>
                             </div>
 
-                            <!-- Constructor stats -->
                             <div v-else-if="draftStep === 3" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
                                 <span>Rel: <b class="text-white">{{ c.reliability }}%</b></span>
                                 <span>Aero: <b class="text-white">{{ (c.style * 100).toFixed(0) }}%</b></span>
                             </div>
 
-                            <!-- Principal stats -->
                             <div v-else-if="draftStep === 4" class="flex justify-between items-center text-[10px] font-mono text-slate-400">
                                 <span>Strat: <b class="text-green-400">{{ c.strategy }}</b></span>
                                 <span>Dev: <b class="text-blue-400">{{ c.development }}</b></span>
                             </div>
 
-                            <!-- Blocked Reason -->
                             <div v-if="c.blocked" class="text-center text-[9px] text-red-400 font-bold uppercase tracking-wider mt-1">
                                 🔒 Duplicate Locked
                             </div>
@@ -365,7 +348,7 @@
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 2: TEAM REVEAL & FULL GRID (MOBILE FRIENDLY) -->
+            <!-- STAGE 2: TEAM REVEAL & FULL GRID -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <section v-if="phase === 'reveal'" class="max-w-3xl mx-auto py-6 space-y-6 w-full">
                 <div class="text-center space-y-1.5">
@@ -375,7 +358,6 @@
                     <h2 class="text-2xl sm:text-4xl font-black uppercase text-white tracking-wide">Paddock Entry Approved</h2>
                 </div>
 
-                <!-- Your Team Card -->
                 <div class="bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-900 border-2 border-red-500/60 rounded-2xl p-5 sm:p-7 shadow-2xl backdrop-blur">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
                         <div>
@@ -404,7 +386,6 @@
                     </div>
                 </div>
 
-                <!-- Full Grid Hierarchy List -->
                 <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 backdrop-blur space-y-3">
                     <h4 class="font-bold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2 flex justify-between">
                         <span>2026 Grid Hierarchy (Ranked by Car OVR)</span>
@@ -430,10 +411,10 @@
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 3: LIVE RACE SIMULATION & TELEMETRY (RESPONSIVE) -->
+            <!-- STAGE 3: LIVE RACE SIMULATION & TELEMETRY -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <section v-if="phase === 'sim'" class="space-y-4 sm:space-y-6 w-full">
-                <!-- Mobile Control Bar -->
+                <!-- Control Bar -->
                 <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-xl backdrop-blur">
                     <div class="flex items-center space-x-2">
                         <span class="w-2.5 h-2.5 rounded-full animate-ping" :class="isAutoRunning ? 'bg-green-500' : 'bg-yellow-500'"></span>
@@ -458,110 +439,259 @@
                     </div>
                 </div>
 
-                <!-- Race Data View (Responsive Columns) -->
-                <div v-if="latestRace" class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                    <!-- Left: Track info, qualifying, incidents -->
-                    <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-                        <!-- Circuit Banner -->
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
-                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                <div class="flex items-center space-x-1.5 text-xs font-mono">
-                                    <span class="bg-red-600 text-white font-black px-2 py-0.5 rounded">R{{ latestRace.round }}/{{ latestRace.total_rounds }}</span>
-                                    <span v-if="latestRace.sprint" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Sprint</span>
-                                    <span v-if="latestRace.wet" class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">🌧️ Wet</span>
-                                    <span v-else class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold uppercase text-[10px]">☀️ Dry</span>
-                                </div>
-                                <span class="text-xs text-slate-400 font-mono">{{ latestRace.circuit }}</span>
+                <!-- 🚦 ROUND 1 PRE-SEASON BRIEFING (SHOWN WHEN SCREEN WOULD OTHERWISE BE BLANK) -->
+                <div v-if="!latestRace" class="max-w-3xl mx-auto py-6 sm:py-8 space-y-6 w-full text-center">
+                    <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border-2 border-red-500/50 rounded-3xl p-6 sm:p-9 shadow-2xl space-y-6 backdrop-blur">
+                        <div class="space-y-2">
+                            <span class="bg-red-600/20 text-red-400 border border-red-500/40 text-xs px-3 py-1 rounded-full uppercase tracking-widest font-mono font-bold">
+                                Season Opener &bull; Round 1 of {{ totalRaces }}
+                            </span>
+                            <h3 class="text-3xl sm:text-5xl font-black uppercase text-white tracking-tight">
+                                Australian Grand Prix
+                            </h3>
+                            <p class="text-slate-400 text-xs sm:text-sm font-mono">
+                                Melbourne Grand Prix Circuit, Albert Park &bull; 58 Laps &bull; ☀️ Dry Forecast
+                            </p>
+                        </div>
+
+                        <!-- Team Starting Lineup -->
+                        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 text-left space-y-3 font-mono">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Your Official Entry</span>
+                                <span class="text-xs font-bold text-yellow-400">{{ userTeam ? userTeam.name : 'Your Team' }} (Car OVR {{ userTeam ? userTeam.car : 80 }})</span>
                             </div>
-
-                            <h3 class="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">{{ latestRace.track }}</h3>
-                            <p v-if="latestRace.flavour" class="text-xs text-slate-400 mt-1 italic">"{{ latestRace.flavour }}"</p>
-
-                            <!-- Weekend notes -->
-                            <div v-if="latestRace.weekend_notes && latestRace.weekend_notes.length" class="mt-3 pt-3 border-t border-slate-800/80 space-y-1">
-                                <div v-for="(note, nIdx) in latestRace.weekend_notes" :key="nIdx" 
-                                     class="text-xs flex items-center space-x-2"
-                                     :class="note.is_user ? 'text-yellow-400 font-bold' : 'text-slate-400'">
-                                    <span>&bull;</span>
-                                    <span>{{ note.text }}</span>
-                                    <span v-if="note.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded uppercase font-black">YOU</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div v-for="d in (userTeam ? userTeam.drivers : [])" :key="d.code" 
+                                     class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+                                    <span class="text-white font-bold">{{ d.name }}</span>
+                                    <span class="text-yellow-400 font-bold">OVR {{ Math.round(d.rating) }}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Incidents -->
-                        <div v-if="latestRace.incidents && latestRace.incidents.length" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2">
-                            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Track Incidents</h4>
-                            <div v-for="(inc, iIdx) in latestRace.incidents" :key="iIdx"
-                                 class="flex items-center space-x-2.5 p-2 rounded-lg border text-xs"
-                                 :class="inc.type === 'sc' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-300' : (inc.type === 'dnf' ? 'bg-red-500/10 border-red-500/40 text-red-300' : 'bg-slate-950 border-slate-800 text-slate-300')">
-                                <span class="font-bold font-mono px-1.5 py-0.5 rounded text-[9px] shrink-0"
-                                      :class="inc.type === 'sc' ? 'bg-yellow-500 text-slate-950' : (inc.type === 'dnf' ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-200')">
-                                    {{ inc.badge }}
-                                </span>
-                                <span class="truncate">{{ inc.text }}</span>
-                            </div>
-                        </div>
+                        <p class="text-slate-300 text-xs sm:text-sm italic max-w-lg mx-auto">
+                            "Engines are fired up in the Albert Park pit lane, tire blankets are coming off, and 22 cars are rolling onto the grid. Are you ready for lights out?"
+                        </p>
 
-                        <!-- Lap 30 snapshot -->
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
-                            <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex justify-between">
-                                <span>Lap 30 Timing Snapshot</span>
-                                <span class="font-mono text-[10px] text-slate-500">Live Intervals</span>
-                            </h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
-                                <div v-for="car in latestRace.lap30_snapshot" :key="car.pos"
-                                     :class="car.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800/60 text-slate-300'"
-                                     class="flex justify-between items-center px-3 py-1.5 rounded-lg border">
-                                    <div class="flex items-center space-x-2 truncate">
-                                        <span class="text-slate-500">P{{ car.pos }}</span>
-                                        <span class="truncate">{{ car.name }}</span>
-                                        <span v-if="car.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                            <button @click="stepNextRace" 
+                                    class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 text-white font-black py-4 px-8 rounded-2xl uppercase tracking-widest text-sm shadow-xl shadow-red-600/30 active:scale-95 transition flex items-center justify-center space-x-2">
+                                <span>🚦</span> <span>Start Round 1: Lights Out</span>
+                            </button>
+                            <button @click="startAutoPlay" 
+                                    class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-4 px-6 rounded-2xl uppercase tracking-wider text-sm transition active:scale-95">
+                                <span>⏩ Stream Full Season</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Race Telemetry (When latestRace exists) -->
+                <div v-else class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <!-- Left: Circuit info, incidents, snapshot -->
+                        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <div class="flex items-center space-x-1.5 text-xs font-mono">
+                                        <span class="bg-red-600 text-white font-black px-2 py-0.5 rounded">R{{ latestRace.round }}/{{ latestRace.total_rounds }}</span>
+                                        <span v-if="latestRace.sprint" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Sprint</span>
+                                        <span v-if="latestRace.wet" class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">🌧️ Wet</span>
+                                        <span v-else class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold uppercase text-[10px]">☀️ Dry</span>
                                     </div>
-                                    <span :class="car.interval === 'LEADER' ? 'text-green-400 font-bold' : 'text-slate-400'" class="ml-2 shrink-0">{{ car.interval }}</span>
+                                    <span class="text-xs text-slate-400 font-mono">{{ latestRace.circuit }}</span>
+                                </div>
+
+                                <h3 class="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">{{ latestRace.track }}</h3>
+                                <p v-if="latestRace.flavour" class="text-xs text-slate-400 mt-1 italic">"{{ latestRace.flavour }}"</p>
+
+                                <div v-if="latestRace.weekend_notes && latestRace.weekend_notes.length" class="mt-3 pt-3 border-t border-slate-800/80 space-y-1">
+                                    <div v-for="(note, nIdx) in latestRace.weekend_notes" :key="nIdx" 
+                                         class="text-xs flex items-center space-x-2"
+                                         :class="note.is_user ? 'text-yellow-400 font-bold' : 'text-slate-400'">
+                                        <span>&bull;</span>
+                                        <span>{{ note.text }}</span>
+                                        <span v-if="note.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded uppercase font-black">YOU</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="latestRace.incidents && latestRace.incidents.length" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2">
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Track Incidents</h4>
+                                <div v-for="(inc, iIdx) in latestRace.incidents" :key="iIdx"
+                                     class="flex items-center space-x-2.5 p-2 rounded-lg border text-xs"
+                                     :class="inc.type === 'sc' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-300' : (inc.type === 'dnf' ? 'bg-red-500/10 border-red-500/40 text-red-300' : 'bg-slate-950 border-slate-800 text-slate-300')">
+                                    <span class="font-bold font-mono px-1.5 py-0.5 rounded text-[9px] shrink-0"
+                                          :class="inc.type === 'sc' ? 'bg-yellow-500 text-slate-950' : (inc.type === 'dnf' ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-200')">
+                                        {{ inc.badge }}
+                                    </span>
+                                    <span class="truncate">{{ inc.text }}</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex justify-between">
+                                    <span>Lap 30 Timing Snapshot</span>
+                                    <span class="font-mono text-[10px] text-slate-500">Live Intervals</span>
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
+                                    <div v-for="car in latestRace.lap30_snapshot" :key="car.pos"
+                                         :class="car.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800/60 text-slate-300'"
+                                         class="flex justify-between items-center px-3 py-1.5 rounded-lg border">
+                                        <div class="flex items-center space-x-2 truncate">
+                                            <span class="text-slate-500">P{{ car.pos }}</span>
+                                            <span class="truncate">{{ car.name }}</span>
+                                            <span v-if="car.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                        </div>
+                                        <span :class="car.interval === 'LEADER' ? 'text-green-400 font-bold' : 'text-slate-400'" class="ml-2 shrink-0">{{ car.interval }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Chequered Flag & Team -->
+                        <div class="space-y-4 sm:space-y-6">
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">
+                                <div class="border-b border-slate-800 pb-2.5">
+                                    <div class="text-[10px] text-green-400 font-mono uppercase tracking-widest font-bold">Chequered Flag</div>
+                                    <h4 class="text-lg sm:text-xl font-black text-white uppercase">{{ latestRace.chequered_flag.winner }} WINS!</h4>
+                                </div>
+
+                                <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto pr-1">
+                                    <div v-for="d in latestRace.chequered_flag.top10" :key="d.pos"
+                                         :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
+                                         class="flex items-center justify-between px-2.5 py-1.5 rounded-lg border">
+                                        <div class="flex items-center space-x-2 truncate">
+                                            <span :class="d.pos === 1 ? 'text-yellow-400 font-bold' : 'text-slate-500'">P{{ d.pos }}</span>
+                                            <span class="truncate">{{ d.name }}</span>
+                                            <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                            <span v-if="d.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded font-black">FL</span>
+                                        </div>
+                                        <span class="text-green-400 font-bold ml-2 shrink-0">+{{ d.pts }}pts</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-yellow-500/40 rounded-2xl p-4 sm:p-5 shadow-xl space-y-2">
+                                <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-yellow-400">Your Team Performance</h4>
+                                <div class="space-y-1.5">
+                                    <div v-for="yd in latestRace.user_team_perf" :key="yd.code"
+                                         class="flex justify-between items-center bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs sm:text-sm font-mono">
+                                        <div class="truncate mr-2">
+                                            <span class="font-bold text-white truncate block sm:inline">{{ yd.name }}</span>
+                                            <span v-if="yd.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded sm:ml-2">FASTEST LAP</span>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            <span :class="yd.dnf ? 'text-red-500' : 'text-yellow-400'" class="font-black text-sm mr-2">{{ yd.pos }}</span>
+                                            <span class="text-green-400 font-bold">+{{ yd.pts }}pts</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right: Results & Team Standings -->
-                    <div class="space-y-4 sm:space-y-6">
-                        <!-- Chequered Flag Result -->
-                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">
-                            <div class="border-b border-slate-800 pb-2.5">
-                                <div class="text-[10px] text-green-400 font-mono uppercase tracking-widest font-bold">Chequered Flag</div>
-                                <h4 class="text-lg sm:text-xl font-black text-white uppercase">{{ latestRace.chequered_flag.winner }} WINS!</h4>
+                    <!-- 📈 GRAPHICAL VIEW & COMPLETED RACES LOG -->
+                    <div v-if="raceHistory.length > 0" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 backdrop-blur">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <div>
+                                <h4 class="font-black uppercase text-white tracking-wider text-sm sm:text-base flex items-center space-x-2">
+                                    <span>📈</span> <span>Season Progression & Telemetry Log</span>
+                                </h4>
+                                <p class="text-[11px] text-slate-400 font-mono">{{ raceHistory.length }} of {{ totalRaces }} Races Completed</p>
                             </div>
 
-                            <!-- Top 10 Order -->
-                            <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto pr-1">
-                                <div v-for="d in latestRace.chequered_flag.top10" :key="d.pos"
-                                     :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
-                                     class="flex items-center justify-between px-2.5 py-1.5 rounded-lg border">
-                                    <div class="flex items-center space-x-2 truncate">
-                                        <span :class="d.pos === 1 ? 'text-yellow-400 font-bold' : 'text-slate-500'">P{{ d.pos }}</span>
-                                        <span class="truncate">{{ d.name }}</span>
-                                        <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
-                                        <span v-if="d.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded font-black">FL</span>
-                                    </div>
-                                    <span class="text-green-400 font-bold ml-2 shrink-0">+{{ d.pts }}pts</span>
+                            <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
+                                <button @click="telemetryTab = 'graph'" 
+                                        :class="telemetryTab === 'graph' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                        class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                    📊 Graph
+                                </button>
+                                <button @click="telemetryTab = 'log'" 
+                                        :class="telemetryTab === 'log' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                        class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                    📜 History Log
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. GRAPHICAL VIEW: SVG PROGRESSION CHART -->
+                        <div v-if="telemetryTab === 'graph'" class="space-y-3">
+                            <div class="flex items-center justify-between text-xs font-mono">
+                                <div class="flex items-center space-x-3 text-[11px]">
+                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-red-500 rounded"></span> <span class="text-slate-300">Team Total</span></span>
+                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-cyan-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[0].name.split(' ')[0] : 'D1' }}</span></span>
+                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-yellow-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[1].name.split(' ')[0] : 'D2' }}</span></span>
+                                </div>
+                                <div class="flex items-center space-x-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-[10px]">
+                                    <button @click="graphMetric = 'pts'" :class="graphMetric === 'pts' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Cumulative Pts</button>
+                                    <span class="text-slate-600">&bull;</span>
+                                    <button @click="graphMetric = 'pos'" :class="graphMetric === 'pos' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Finish Position</button>
+                                </div>
+                            </div>
+
+                            <!-- Pure SVG Chart -->
+                            <div class="bg-slate-950/80 p-2 sm:p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                <svg viewBox="0 0 640 180" class="w-full h-auto overflow-visible">
+                                    <!-- Gridlines -->
+                                    <line x1="40" y1="25" x2="600" y2="25" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="65" x2="600" y2="65" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="105" x2="600" y2="105" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="145" x2="600" y2="145" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="155" x2="600" y2="155" stroke="#334155" stroke-width="1" />
+
+                                    <!-- Cumulative Points View -->
+                                    <template v-if="graphMetric === 'pts'">
+                                        <!-- Team Line (Red) -->
+                                        <polyline :points="teamPointsPath" fill="none" stroke="#E10600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                        <!-- Driver 1 Line (Cyan) -->
+                                        <polyline :points="d1PointsPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        <!-- Driver 2 Line (Yellow) -->
+                                        <polyline :points="d2PointsPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </template>
+
+                                    <!-- Finish Position View -->
+                                    <template v-else>
+                                        <polyline :points="d1PosPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        <polyline :points="d2PosPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </template>
+
+                                    <!-- Nodes on last race -->
+                                    <template v-if="raceHistory.length > 0">
+                                        <circle v-for="(r, idx) in raceHistory" :key="'t'+idx"
+                                                :cx="40 + (idx / Math.max(1, totalRaces - 1)) * 560"
+                                                :cy="graphMetric === 'pts' ? (155 - (r.team_cum_pts / maxHistoryPoints) * 130) : (25 + ((r.d1_pos === 'DNF' ? 22 : r.d1_pos) - 1) / 21 * 130)"
+                                                r="3.5" fill="#E10600" stroke="#FFF" stroke-width="1" />
+                                    </template>
+                                </svg>
+                                <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1 px-4">
+                                    <span>Round 1 (Melbourne)</span>
+                                    <span>Mid-Season (Spa)</span>
+                                    <span>Final Round</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Your Team Performance -->
-                        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-yellow-500/40 rounded-2xl p-4 sm:p-5 shadow-xl space-y-2">
-                            <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-yellow-400">Your Team Performance</h4>
-                            <div class="space-y-1.5">
-                                <div v-for="yd in latestRace.user_team_perf" :key="yd.code"
-                                     class="flex justify-between items-center bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs sm:text-sm font-mono">
-                                    <div class="truncate mr-2">
-                                        <span class="font-bold text-white truncate block sm:inline">{{ yd.name }}</span>
-                                        <span v-if="yd.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded sm:ml-2">FASTEST LAP</span>
+                        <!-- 2. COMPLETED RACES LOG -->
+                        <div v-if="telemetryTab === 'log'" class="space-y-2 max-h-72 overflow-y-auto pr-1 font-mono text-xs">
+                            <div v-for="hr in raceHistory" :key="hr.round"
+                                 class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between">
+                                <div class="flex items-center space-x-2.5 truncate mr-2">
+                                    <span class="bg-red-600/20 text-red-400 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">R{{ hr.round }}</span>
+                                    <div class="truncate">
+                                        <span class="font-bold text-white truncate block sm:inline">{{ hr.track }}</span>
+                                        <span class="text-slate-400 text-[11px] block sm:inline sm:ml-2">Winner: <b class="text-slate-300">{{ hr.winner }}</b></span>
                                     </div>
-                                    <div class="text-right shrink-0">
-                                        <span :class="yd.dnf ? 'text-red-500' : 'text-yellow-400'" class="font-black text-sm mr-2">{{ yd.pos }}</span>
-                                        <span class="text-green-400 font-bold">+{{ yd.pts }}pts</span>
+                                </div>
+
+                                <div class="flex items-center space-x-3 shrink-0 text-right">
+                                    <div class="text-[11px] hidden sm:block">
+                                        <span class="text-cyan-400">{{ hr.d1_pos === 'DNF' ? 'DNF' : 'P'+hr.d1_pos }} (+{{ hr.d1_pts }})</span>
+                                        <span class="text-slate-600 mx-1">&bull;</span>
+                                        <span class="text-yellow-400">{{ hr.d2_pos === 'DNF' ? 'DNF' : 'P'+hr.d2_pos }} (+{{ hr.d2_pts }})</span>
+                                    </div>
+                                    <div class="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-green-400 font-bold text-xs">
+                                        +{{ hr.team_pts }} pts
                                     </div>
                                 </div>
                             </div>
@@ -571,7 +701,7 @@
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 4: SUMMER BREAK MODAL (RESPONSIVE CASINO WHEEL) -->
+            <!-- STAGE 4: SUMMER BREAK MODAL -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <div v-if="summerBreakPrompt" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md">
                 <div class="bg-slate-900 border-2 border-yellow-500 rounded-2xl sm:rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
@@ -583,7 +713,6 @@
                         <p class="text-slate-400 text-xs">Choose whether to lock your setup or take strategic risks for the final stint.</p>
                     </div>
 
-                    <!-- Best & Worst Driver Callout -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono">
                         <div class="border border-green-500/30 bg-green-500/10 p-2.5 rounded-lg">
                             <span class="text-[9px] text-green-400 uppercase font-bold block">Top Driver</span>
@@ -597,7 +726,6 @@
                         </div>
                     </div>
 
-                    <!-- Summer Break Options -->
                     <div v-if="!summerBreakProcessing" class="space-y-2 text-left">
                         <button @click="submitSummerBreak(1)" 
                                 class="w-full p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 transition card-active">
@@ -646,7 +774,7 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- STAGE 5: GRAND CHAMPIONSHIP PODIUM & FINALE (COMPLETELY OVERHAULED) -->
+            <!-- STAGE 5: GRAND CHAMPIONSHIP PODIUM & FINALE -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <section v-if="phase === 'ended' && seasonEndData" class="max-w-4xl mx-auto py-6 sm:py-10 space-y-6 sm:space-y-8 w-full">
                 <!-- Grand Championship Header -->
@@ -662,13 +790,54 @@
                     </p>
                 </div>
 
-                <!-- 🏆 REAL 3D PODIUM CEREMONY (P2, P1, P3) -->
+                <!-- 🏁 EXPLICIT USER CHAMPIONSHIP STANDINGS SPOTLIGHT -->
+                <div class="bg-gradient-to-r from-red-950/80 via-slate-900 to-slate-950 border-2 border-yellow-500/80 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-4 backdrop-blur">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                        <div>
+                            <span class="text-[10px] text-yellow-400 uppercase font-mono tracking-widest font-bold">Official FIA Classification</span>
+                            <h3 class="text-xl sm:text-2xl font-black uppercase text-white">Your Championship Standing</h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-mono font-bold px-3 py-1 rounded-full uppercase"
+                                  :class="seasonEndData.user_team_pos === 1 ? 'bg-yellow-400 text-slate-950' : (seasonEndData.user_team_pos <= 3 ? 'bg-slate-700 text-white' : 'bg-red-950 text-red-400 border border-red-500/40')">
+                                {{ seasonEndData.user_team_pos === 1 ? '👑 WORLD CHAMPION CONSTRUCTOR' : ('P' + seasonEndData.user_team_pos + ' IN CONSTRUCTORS') }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 3 Metric Cards: Constructor, Driver 1, Driver 2 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
+                        <div class="bg-slate-950/80 p-4 rounded-2xl border border-yellow-500/40 text-center space-y-1">
+                            <span class="text-[10px] text-slate-400 uppercase block">Constructors' Championship</span>
+                            <div class="text-3xl sm:text-4xl font-black text-yellow-400">P{{ seasonEndData.user_team_pos }}</div>
+                            <div class="text-xs font-bold text-white truncate">{{ userTeam ? userTeam.name : 'Your Team' }}</div>
+                            <div class="text-[11px] text-slate-400">{{ seasonEndData.user_team_pts }} Points</div>
+                        </div>
+
+                        <div v-if="seasonEndData.user_drivers && seasonEndData.user_drivers[0]" 
+                             class="bg-slate-950/80 p-4 rounded-2xl border border-cyan-500/40 text-center space-y-1">
+                            <span class="text-[10px] text-cyan-400 uppercase block">Driver 1 Standing</span>
+                            <div class="text-3xl sm:text-4xl font-black text-cyan-400">P{{ seasonEndData.user_drivers[0].pos }}</div>
+                            <div class="text-xs font-bold text-white truncate">{{ seasonEndData.user_drivers[0].name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ seasonEndData.user_drivers[0].pts }} Pts &bull; {{ seasonEndData.user_drivers[0].wins }}W &bull; {{ seasonEndData.user_drivers[0].podiums }}Pod</div>
+                        </div>
+
+                        <div v-if="seasonEndData.user_drivers && seasonEndData.user_drivers[1]" 
+                             class="bg-slate-950/80 p-4 rounded-2xl border border-yellow-500/40 text-center space-y-1">
+                            <span class="text-[10px] text-yellow-400 uppercase block">Driver 2 Standing</span>
+                            <div class="text-3xl sm:text-4xl font-black text-yellow-400">P{{ seasonEndData.user_drivers[1].pos }}</div>
+                            <div class="text-xs font-bold text-white truncate">{{ seasonEndData.user_drivers[1].name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ seasonEndData.user_drivers[1].pts }} Pts &bull; {{ seasonEndData.user_drivers[1].wins }}W &bull; {{ seasonEndData.user_drivers[1].podiums }}Pod</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🏆 3D PODIUM CEREMONY (P2, P1, P3) -->
                 <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-8 backdrop-blur shadow-2xl space-y-6">
                     <h3 class="text-xs font-mono uppercase tracking-widest font-bold text-center text-slate-400">
                         Official World Championship Podium
                     </h3>
 
-                    <!-- Podium Steps -->
                     <div class="flex items-end justify-center gap-2 sm:gap-4 pt-8 pb-4">
                         <!-- P2 Step (Silver) -->
                         <div class="flex-1 max-w-[170px] flex flex-col items-center">
@@ -712,50 +881,39 @@
                     </div>
                 </div>
 
-                <!-- 🎖️ YOUR TEAM'S OFFICIAL SEASON REPORT CARD -->
-                <div class="bg-gradient-to-r from-red-950/70 via-slate-900 to-slate-900 border-2 border-yellow-500/60 rounded-3xl p-5 sm:p-7 shadow-2xl backdrop-blur">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
-                        <div>
-                            <span class="text-[10px] font-mono text-yellow-400 uppercase tracking-widest font-bold">Your Season Grade & Analysis</span>
-                            <h3 class="text-2xl sm:text-3xl font-black text-white uppercase">{{ userTeam ? userTeam.name : 'Your Team' }}</h3>
-                            <p class="text-xs text-slate-300 mt-0.5">Constructor Rank: <b class="text-yellow-400">P{{ seasonEndData.user_team_pos }}</b> &bull; Best Driver: <b class="text-green-400">P{{ seasonEndData.user_best_pos }} WDC</b></p>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-slate-950 border border-yellow-500/40 px-4 py-2 rounded-2xl text-center">
-                                <span class="text-[9px] text-slate-400 uppercase font-mono block">Season Rating</span>
-                                <span class="text-2xl font-black mono text-yellow-400">
-                                    {{ seasonEndData.user_best_pos === 1 ? 'A+' : (seasonEndData.user_team_pos <= 3 ? 'A' : (seasonEndData.user_team_pos <= 5 ? 'B+' : 'B')) }}
-                                </span>
-                            </div>
+                <!-- 📈 SEASON PROGRESSION TELEMETRY CHART IN FINALE -->
+                <div v-if="raceHistory.length > 0" class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <h4 class="font-black uppercase text-white tracking-wider text-sm flex items-center space-x-2">
+                            <span>📊</span> <span>Full Season Telemetry Progression</span>
+                        </h4>
+                        <div class="flex items-center space-x-2 text-xs font-mono">
+                            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-red-500 rounded"></span> <span class="text-slate-400">Team</span></span>
+                            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-cyan-400 rounded"></span> <span class="text-slate-400">D1</span></span>
+                            <span class="flex items-center space-x-1"><span class="w-2.5 h-1 bg-yellow-400 rounded"></span> <span class="text-slate-400">D2</span></span>
                         </div>
                     </div>
-
-                    <!-- Highlights Breakdown -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center font-mono text-xs">
-                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-                            <span class="text-slate-500 block text-[10px]">TOTAL WCC POINTS</span>
-                            <span class="text-xl font-bold text-white">{{ seasonEndData.user_team_pts }}</span>
-                        </div>
-                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-                            <span class="text-slate-500 block text-[10px]">CONSTRUCTOR FINISH</span>
-                            <span class="text-xl font-bold text-yellow-400">P{{ seasonEndData.user_team_pos }}</span>
-                        </div>
-                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-                            <span class="text-slate-500 block text-[10px]">LEAD DRIVER FINISH</span>
-                            <span class="text-xl font-bold text-green-400">P{{ seasonEndData.user_best_pos }}</span>
-                        </div>
-                        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
-                            <span class="text-slate-500 block text-[10px]">ACCOLADE</span>
-                            <span class="text-xs font-bold text-cyan-400 block mt-1">
-                                {{ seasonEndData.user_best_pos === 1 ? 'WORLD CHAMPION' : (seasonEndData.user_team_pos <= 3 ? 'PODIUM REGULARS' : 'COMPETITIVE RACER') }}
-                            </span>
+                    <div class="bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+                        <svg viewBox="0 0 640 180" class="w-full h-auto overflow-visible">
+                            <line x1="40" y1="25" x2="600" y2="25" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="40" y1="65" x2="600" y2="65" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="40" y1="105" x2="600" y2="105" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="40" y1="145" x2="600" y2="145" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="40" y1="155" x2="600" y2="155" stroke="#334155" stroke-width="1" />
+                            <polyline :points="teamPointsPath" fill="none" stroke="#E10600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                            <polyline :points="d1PointsPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <polyline :points="d2PointsPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1 px-4">
+                            <span>Round 1</span>
+                            <span>Mid-Season</span>
+                            <span>Final Standings</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 📋 FULL TABLES WITH TAB SELECTOR (MOBILE FRIENDLY) -->
+                <!-- 📋 FULL TABLES WITH TAB SELECTOR -->
                 <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
-                    <!-- Tab Switcher -->
                     <div class="flex border-b border-slate-800 pb-3 gap-2">
                         <button @click="endTableTab = 'wdc'" 
                                 :class="endTableTab === 'wdc' ? 'bg-red-600 text-white font-bold' : 'bg-slate-950 text-slate-400 hover:text-white'"
@@ -805,7 +963,7 @@
                         </div>
                     </div>
 
-                    <!-- Optional Final Race Table -->
+                    <!-- Final Race Table -->
                     <div v-if="endTableTab === 'last_race' && latestRace" class="space-y-2 font-mono text-xs max-h-96 overflow-y-auto pr-1">
                         <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
                             <span class="text-slate-400 font-bold uppercase truncate mr-2">{{ latestRace.track }} (Round {{ latestRace.round }})</span>
@@ -825,14 +983,13 @@
                     </div>
                 </div>
 
-                <!-- Play Again Button -->
                 <button @click="resetToConfig" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl uppercase tracking-widest text-sm transition active:scale-98 shadow-xl">
                     Draft Another Season ↺
                 </button>
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-            <!-- LIVE STANDINGS POPUP (RESPONSIVE) -->
+            <!-- LIVE STANDINGS MODAL -->
             <!-- ═══════════════════════════════════════════════════════════════════════════ -->
             <div v-if="showStandingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md">
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
@@ -879,15 +1036,14 @@
     <script>
         const { createApp } = Vue;
 
-        // Web Audio Synthesizer Fanfare for Grand Finale
         function playVictoryFanfare() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const notes = [
-                    { f: 523.25, d: 0.18, t: 0.0 },  // C5
-                    { f: 659.25, d: 0.18, t: 0.18 }, // E5
-                    { f: 783.99, d: 0.18, t: 0.36 }, // G5
-                    { f: 1046.50, d: 0.55, t: 0.54 } // C6
+                    { f: 523.25, d: 0.18, t: 0.0 },
+                    { f: 659.25, d: 0.18, t: 0.18 },
+                    { f: 783.99, d: 0.18, t: 0.36 },
+                    { f: 1046.50, d: 0.55, t: 0.54 }
                 ];
                 notes.forEach(n => {
                     const osc = ctx.createOscillator();
@@ -901,9 +1057,7 @@
                     osc.start(ctx.currentTime + n.t);
                     osc.stop(ctx.currentTime + n.t + n.d);
                 });
-            } catch (e) {
-                // AudioContext blocked or unsupported, silent fallback
-            }
+            } catch (e) {}
         }
 
         createApp({
@@ -934,11 +1088,14 @@
                     sessionId: null,
                     userTeam: null,
                     fullGrid: [],
-                    totalRaces: 24,
+                    totalRaces: 23,
 
                     ws: null,
                     currentRound: 0,
                     latestRace: null,
+                    raceHistory: [],
+                    telemetryTab: 'graph',
+                    graphMetric: 'pts',
                     isAutoRunning: false,
                     showStandingsModal: false,
                     liveStandings: null,
@@ -966,6 +1123,60 @@
                         (c.team && c.team.toLowerCase().includes(q)) ||
                         (c.year && c.year.toString().includes(q))
                     );
+                },
+                maxHistoryPoints() {
+                    if (!this.raceHistory.length) return 1;
+                    return Math.max(1, ...this.raceHistory.map(r => r.team_cum_pts));
+                },
+                teamPointsPath() {
+                    if (!this.raceHistory.length) return '';
+                    const total = Math.max(this.totalRaces, 23);
+                    const maxPts = this.maxHistoryPoints;
+                    return this.raceHistory.map((r, i) => {
+                        const x = 40 + (i / Math.max(1, total - 1)) * 560;
+                        const y = 155 - (r.team_cum_pts / maxPts) * 130;
+                        return `${x},${y}`;
+                    }).join(' ');
+                },
+                d1PointsPath() {
+                    if (!this.raceHistory.length) return '';
+                    const total = Math.max(this.totalRaces, 23);
+                    const maxPts = this.maxHistoryPoints;
+                    return this.raceHistory.map((r, i) => {
+                        const x = 40 + (i / Math.max(1, total - 1)) * 560;
+                        const y = 155 - (r.d1_cum_pts / maxPts) * 130;
+                        return `${x},${y}`;
+                    }).join(' ');
+                },
+                d2PointsPath() {
+                    if (!this.raceHistory.length) return '';
+                    const total = Math.max(this.totalRaces, 23);
+                    const maxPts = this.maxHistoryPoints;
+                    return this.raceHistory.map((r, i) => {
+                        const x = 40 + (i / Math.max(1, total - 1)) * 560;
+                        const y = 155 - (r.d2_cum_pts / maxPts) * 130;
+                        return `${x},${y}`;
+                    }).join(' ');
+                },
+                d1PosPath() {
+                    if (!this.raceHistory.length) return '';
+                    const total = Math.max(this.totalRaces, 23);
+                    return this.raceHistory.map((r, i) => {
+                        const x = 40 + (i / Math.max(1, total - 1)) * 560;
+                        const pos = r.d1_pos === 'DNF' ? 22 : r.d1_pos;
+                        const y = 25 + ((pos - 1) / 21) * 130;
+                        return `${x},${y}`;
+                    }).join(' ');
+                },
+                d2PosPath() {
+                    if (!this.raceHistory.length) return '';
+                    const total = Math.max(this.totalRaces, 23);
+                    return this.raceHistory.map((r, i) => {
+                        const x = 40 + (i / Math.max(1, total - 1)) * 560;
+                        const pos = r.d2_pos === 'DNF' ? 22 : r.d2_pos;
+                        const y = 25 + ((pos - 1) / 21) * 130;
+                        return `${x},${y}`;
+                    }).join(' ');
                 }
             },
             methods: {
@@ -1050,14 +1261,51 @@
                     this.phase = 'sim';
                     this.currentRound = 0;
                     this.latestRace = null;
+                    this.raceHistory = [];
                     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                     this.ws = new WebSocket(`${protocol}//${window.location.host}/stream/${this.sessionId}`);
 
                     this.ws.onmessage = (event) => {
                         const msg = JSON.parse(event.data);
                         if (msg.type === 'race_result') {
-                            this.latestRace = msg.data;
-                            this.currentRound = msg.data.round;
+                            const r = msg.data;
+                            this.latestRace = r;
+                            this.currentRound = r.round;
+
+                            const d1Perf = r.user_team_perf[0] || { name: 'Driver 1', pos: 'DNF', pts: 0 };
+                            const d2Perf = r.user_team_perf[1] || { name: 'Driver 2', pos: 'DNF', pts: 0 };
+                            const parsePos = (posStr) => {
+                                if (typeof posStr === 'number') return posStr;
+                                if (posStr === 'DNF') return 'DNF';
+                                const num = parseInt(posStr.toString().replace('P', ''));
+                                return isNaN(num) ? 'DNF' : num;
+                            };
+
+                            const d1PosNum = parsePos(d1Perf.pos);
+                            const d2PosNum = parsePos(d2Perf.pos);
+                            const raceTeamPts = (d1Perf.pts || 0) + (d2Perf.pts || 0);
+
+                            const prevHistory = this.raceHistory.length > 0 ? this.raceHistory[this.raceHistory.length - 1] : null;
+                            const teamCum = (prevHistory ? prevHistory.team_cum_pts : 0) + raceTeamPts;
+                            const d1Cum = (prevHistory ? prevHistory.d1_cum_pts : 0) + (d1Perf.pts || 0);
+                            const d2Cum = (prevHistory ? prevHistory.d2_cum_pts : 0) + (d2Perf.pts || 0);
+
+                            this.raceHistory.push({
+                                round: r.round,
+                                track: r.track,
+                                circuit: r.circuit,
+                                winner: r.chequered_flag.winner,
+                                d1_name: d1Perf.name,
+                                d1_pos: d1PosNum,
+                                d1_pts: d1Perf.pts || 0,
+                                d1_cum_pts: d1Cum,
+                                d2_name: d2Perf.name,
+                                d2_pos: d2PosNum,
+                                d2_pts: d2Perf.pts || 0,
+                                d2_cum_pts: d2Cum,
+                                team_pts: raceTeamPts,
+                                team_cum_pts: teamCum
+                            });
                         } else if (msg.type === 'summer_break_prompt') {
                             this.summerBreakPrompt = msg.data;
                             this.isAutoRunning = false;
@@ -1113,6 +1361,7 @@
                     this.phase = 'config';
                     this.seasonEndData = null;
                     this.latestRace = null;
+                    this.raceHistory = [];
                     this.userTeam = null;
                     if (this.ws) {
                         this.ws.close();
