@@ -433,11 +433,15 @@
                     </div>
 
                     <div class="flex items-center space-x-2">
+                        <div v-if="!isAutoRunning" class="hidden sm:flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[10px] font-mono">
+                            <button @click="streamSpeed = 'normal'" :class="streamSpeed === 'normal' ? 'bg-slate-800 text-yellow-400 font-bold' : 'text-slate-500 hover:text-slate-300'" class="px-2 py-1 rounded">Paced (4s)</button>
+                            <button @click="streamSpeed = 'fast'" :class="streamSpeed === 'fast' ? 'bg-slate-800 text-yellow-400 font-bold' : 'text-slate-500 hover:text-slate-300'" class="px-2 py-1 rounded">Fast (2.5s)</button>
+                        </div>
                         <button @click="stepNextRace" :disabled="isAutoRunning"
                                 class="bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white px-3.5 sm:px-5 py-2 rounded-xl text-xs uppercase font-black tracking-wider transition active:scale-95 shadow-md shadow-red-600/20">
                             Next Race ➔
                         </button>
-                        <button v-if="!isAutoRunning" @click="startAutoPlay"
+                        <button v-if="!isAutoRunning" @click="startAutoPlay()"
                                 class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs uppercase font-bold tracking-wider transition active:scale-95">
                             ⏩ Stream Rest
                         </button>
@@ -497,210 +501,340 @@
 
                 <!-- Active Race Telemetry (When latestRace exists) -->
                 <div v-else class="space-y-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <!-- Left: Circuit info, incidents, snapshot -->
-                        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
-                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
-                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                    <div class="flex items-center space-x-1.5 text-xs font-mono">
-                                        <span class="bg-red-600 text-white font-black px-2 py-0.5 rounded">R{{ latestRace.round }}/{{ latestRace.total_rounds }}</span>
-                                        <span v-if="latestRace.sprint" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Sprint</span>
-                                        <span v-if="latestRace.wet" class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">🌧️ Wet</span>
-                                        <span v-else class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold uppercase text-[10px]">☀️ Dry</span>
+                    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                    <!-- 1. IN-RACE TELEMETRY & COMMENTARY (AT THE TOP DURING THE RACE) -->
+                    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                    <div class="space-y-4 sm:space-y-6">
+                        <!-- Circuit & Conditions Banner -->
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                                <div class="flex items-center space-x-2 text-xs font-mono mb-1">
+                                    <span class="bg-red-600 text-white font-black px-2 py-0.5 rounded">R{{ latestRace.round }}/{{ latestRace.total_rounds }}</span>
+                                    <span v-if="latestRace.sprint" class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">Sprint Weekend</span>
+                                    <span v-if="latestRace.wet" class="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded font-bold uppercase text-[10px]">🌧️ Wet Conditions</span>
+                                    <span v-else class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-bold uppercase text-[10px]">☀️ Dry Conditions</span>
+                                    <span class="text-slate-400">&bull; {{ latestRace.total_laps || 56 }} Laps</span>
+                                </div>
+                                <h3 class="text-xl sm:text-2xl font-black uppercase text-white tracking-tight">{{ latestRace.track }}</h3>
+                                <p class="text-xs text-slate-400 font-mono">{{ latestRace.circuit }} <span v-if="latestRace.flavour" class="italic text-slate-500"> — "{{ latestRace.flavour }}"</span></p>
+                            </div>
+
+                            <div v-if="latestRace.weekend_notes && latestRace.weekend_notes.length" class="flex flex-wrap gap-2 text-xs font-mono">
+                                <div v-for="(note, nIdx) in latestRace.weekend_notes" :key="nIdx" 
+                                     class="px-2.5 py-1 rounded-lg border text-[11px] flex items-center space-x-1.5"
+                                     :class="note.is_user ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800 text-slate-300'">
+                                    <span>{{ note.is_user ? '⭐' : '⚡' }}</span>
+                                    <span>{{ note.text }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🏁 IN-RACE "LEAD IN RACE VS LAP" GRAPHICAL VIEW (ABOVE COMMENTARY) -->
+                        <div v-if="latestRace.in_race_telemetry && latestRace.in_race_telemetry.drivers.length" 
+                             class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                                <div>
+                                    <div class="text-[10px] text-red-500 font-mono font-black uppercase tracking-widest flex items-center space-x-1">
+                                        <span class="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1"></span> LIVE TELEMETRY
                                     </div>
-                                    <span class="text-xs text-slate-400 font-mono">{{ latestRace.circuit }}</span>
+                                    <h4 class="font-black uppercase text-white tracking-wider text-base sm:text-lg">
+                                        In-Race Lead & Lap Telemetry
+                                    </h4>
+                                    <p class="text-[11px] text-slate-400 font-mono">
+                                        Tracking Top-5 Contenders + Your Drivers across race laps
+                                    </p>
                                 </div>
 
-                                <h3 class="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">{{ latestRace.track }}</h3>
-                                <p v-if="latestRace.flavour" class="text-xs text-slate-400 mt-1 italic">"{{ latestRace.flavour }}"</p>
-
-                                <div v-if="latestRace.weekend_notes && latestRace.weekend_notes.length" class="mt-3 pt-3 border-t border-slate-800/80 space-y-1">
-                                    <div v-for="(note, nIdx) in latestRace.weekend_notes" :key="nIdx" 
-                                         class="text-xs flex items-center space-x-2"
-                                         :class="note.is_user ? 'text-yellow-400 font-bold' : 'text-slate-400'">
-                                        <span>&bull;</span>
-                                        <span>{{ note.text }}</span>
-                                        <span v-if="note.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded uppercase font-black">YOU</span>
-                                    </div>
+                                <div class="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
+                                    <button @click="inRaceMetric = 'pos'" 
+                                            :class="inRaceMetric === 'pos' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                            class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                        Position (P1-P20)
+                                    </button>
+                                    <button @click="inRaceMetric = 'gap'" 
+                                            :class="inRaceMetric === 'gap' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                            class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                        Lead Gap (Sec)
+                                    </button>
                                 </div>
                             </div>
 
-                            <div v-if="latestRace.incidents && latestRace.incidents.length" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2">
-                                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Track Incidents</h4>
-                                <div v-for="(inc, iIdx) in latestRace.incidents" :key="iIdx"
-                                     class="flex items-center space-x-2.5 p-2 rounded-lg border text-xs"
-                                     :class="inc.type === 'sc' ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-300' : (inc.type === 'dnf' ? 'bg-red-500/10 border-red-500/40 text-red-300' : 'bg-slate-950 border-slate-800 text-slate-300')">
-                                    <span class="font-bold font-mono px-1.5 py-0.5 rounded text-[9px] shrink-0"
-                                          :class="inc.type === 'sc' ? 'bg-yellow-500 text-slate-950' : (inc.type === 'dnf' ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-200')">
-                                        {{ inc.badge }}
-                                    </span>
-                                    <span class="truncate">{{ inc.text }}</span>
+                            <!-- Telemetry Drivers Legend Pills -->
+                            <div class="flex flex-wrap gap-2 pt-1 font-mono text-xs">
+                                <div v-for="d in latestRace.in_race_telemetry.drivers" :key="d.code"
+                                     class="flex items-center space-x-2 px-2.5 py-1 rounded-lg border text-[11px]"
+                                     :class="d.is_user ? 'bg-yellow-500/15 border-yellow-500/60 text-yellow-300 font-bold' : 'bg-slate-950/70 border-slate-800 text-slate-300'">
+                                    <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: d.color }"></span>
+                                    <span>{{ d.name }}</span>
+                                    <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                    <span class="text-slate-500 text-[10px]">({{ d.final_pos === 'DNF' ? 'DNF' : 'P' + d.final_pos }})</span>
                                 </div>
                             </div>
 
-                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5">
-                                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex justify-between">
-                                    <span>Lap 30 Timing Snapshot</span>
-                                    <span class="font-mono text-[10px] text-slate-500">Live Intervals</span>
+                            <!-- Pure SVG In-Race Lap Graph -->
+                            <div class="bg-slate-950/90 p-3 sm:p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                <svg viewBox="0 0 640 180" class="w-full h-auto overflow-visible font-mono">
+                                    <!-- Background Horizontal Gridlines -->
+                                    <line x1="40" y1="25" x2="600" y2="25" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="56" x2="600" y2="56" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="88" x2="600" y2="88" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="119" x2="600" y2="119" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                    <line x1="40" y1="150" x2="600" y2="150" stroke="#334155" stroke-width="1" />
+
+                                    <!-- Left Axis Labels -->
+                                    <template v-if="inRaceMetric === 'pos'">
+                                        <text x="32" y="29" fill="#94a3b8" font-size="9" text-anchor="end">P1</text>
+                                        <text x="32" y="60" fill="#64748b" font-size="9" text-anchor="end">P5</text>
+                                        <text x="32" y="92" fill="#64748b" font-size="9" text-anchor="end">P10</text>
+                                        <text x="32" y="123" fill="#64748b" font-size="9" text-anchor="end">P15</text>
+                                        <text x="32" y="154" fill="#64748b" font-size="9" text-anchor="end">P20</text>
+                                    </template>
+                                    <template v-else>
+                                        <text x="32" y="29" fill="#10b981" font-size="9" text-anchor="end">0.0s</text>
+                                        <text x="32" y="60" fill="#64748b" font-size="9" text-anchor="end">+10s</text>
+                                        <text x="32" y="92" fill="#64748b" font-size="9" text-anchor="end">+20s</text>
+                                        <text x="32" y="123" fill="#64748b" font-size="9" text-anchor="end">+30s</text>
+                                        <text x="32" y="154" fill="#64748b" font-size="9" text-anchor="end">+50s</text>
+                                    </template>
+
+                                    <!-- Driver Progression Lines -->
+                                    <template v-for="d in latestRace.in_race_telemetry.drivers" :key="'line-' + d.code">
+                                        <polyline :points="getInRacePoints(d)"
+                                                  fill="none"
+                                                  :stroke="d.color"
+                                                  :stroke-width="d.is_user ? 3.5 : 2.2"
+                                                  :stroke-dasharray="d.final_pos === 'DNF' ? '5,3' : 'none'"
+                                                  stroke-linecap="round"
+                                                  stroke-linejoin="round"
+                                                  class="transition-all duration-300" />
+                                        
+                                        <!-- End Node on Finish Lap -->
+                                        <circle :cx="600"
+                                                :cy="getInRaceFinalY(d)"
+                                                :r="d.is_user ? 4.5 : 3"
+                                                :fill="d.color"
+                                                :stroke="d.is_user ? '#FFF' : '#000'"
+                                                stroke-width="1.5" />
+                                    </template>
+                                </svg>
+
+                                <!-- X-Axis Laps Checkpoints Footer -->
+                                <div class="flex justify-between text-[10px] font-mono text-slate-400 mt-2 px-6 sm:px-10 border-t border-slate-900 pt-1.5">
+                                    <span>Lap 1 (Launch)</span>
+                                    <span>Lap 15 (Stint 1)</span>
+                                    <span>Lap 30 (Mid-Race)</span>
+                                    <span>Lap 45 (Stint 2)</span>
+                                    <span>Lap {{ latestRace.total_laps || 56 }} (Finish)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🎙️ LIVE RACE COMMENTARY & RADIO FEED (RIGHT BELOW GRAPH) -->
+                        <div v-if="latestRace.race_commentary && latestRace.race_commentary.length" 
+                             class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-3">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                                <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-white flex items-center space-x-2">
+                                    <span>🎙️</span> <span>Live Trackside Commentary & Race Radio</span>
                                 </h4>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
-                                    <div v-for="car in latestRace.lap30_snapshot" :key="car.pos"
-                                         :class="car.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800/60 text-slate-300'"
-                                         class="flex justify-between items-center px-3 py-1.5 rounded-lg border">
-                                        <div class="flex items-center space-x-2 truncate">
-                                            <span class="text-slate-500">P{{ car.pos }}</span>
-                                            <span class="truncate">{{ car.name }}</span>
-                                            <span v-if="car.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                <span class="text-[10px] font-mono text-slate-400">{{ latestRace.race_commentary.length }} Race Updates</span>
+                            </div>
+
+                            <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                                <div v-for="(comm, cIdx) in latestRace.race_commentary" :key="cIdx"
+                                     class="p-2.5 sm:p-3 rounded-xl border text-xs sm:text-sm transition flex items-start space-x-3"
+                                     :class="comm.is_user ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-200' : (comm.type === 'sc' || comm.type === 'dnf' ? 'bg-red-500/10 border-red-500/40 text-red-200' : 'bg-slate-950/70 border-slate-800 text-slate-300')">
+                                    <div class="shrink-0 flex flex-col items-center">
+                                        <span class="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase mb-1"
+                                              :class="comm.type === 'start' ? 'bg-green-600 text-white' : (comm.type === 'pit' ? 'bg-blue-600 text-white' : (comm.type === 'radio' ? 'bg-amber-500 text-slate-950 font-black' : (comm.type === 'sc' || comm.type === 'dnf' ? 'bg-red-600 text-white' : (comm.type === 'fl' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-300'))))">
+                                            {{ comm.badge }}
+                                        </span>
+                                        <span class="text-[9px] font-mono text-slate-500">{{ comm.lap === 0 ? 'START' : 'L' + comm.lap }}</span>
+                                    </div>
+                                    <div class="space-y-0.5">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-bold text-white text-xs sm:text-sm">{{ comm.title }}</span>
+                                            <span v-if="comm.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded uppercase font-black">YOUR TEAM</span>
                                         </div>
-                                        <span :class="car.interval === 'LEADER' ? 'text-green-400 font-bold' : 'text-slate-400'" class="ml-2 shrink-0">{{ car.interval }}</span>
+                                        <p class="text-xs sm:text-[13px] leading-relaxed opacity-90">{{ comm.text }}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right: Chequered Flag & Team -->
-                        <div class="space-y-4 sm:space-y-6">
-                            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl space-y-3">
-                                <div class="border-b border-slate-800 pb-2.5">
-                                    <div class="text-[10px] text-green-400 font-mono uppercase tracking-widest font-bold">Chequered Flag</div>
-                                    <h4 class="text-lg sm:text-xl font-black text-white uppercase">{{ latestRace.chequered_flag.winner }} WINS!</h4>
+                        <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                        <!-- 2. CHEQUERED FLAG LEADERBOARD (AT THE FIRST OF RESULTS) -->
+                        <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <!-- Left: Chequered Flag Top 10 Classification -->
+                            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-3">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                                    <div>
+                                        <div class="text-[10px] text-green-400 font-mono uppercase tracking-widest font-black flex items-center space-x-1.5">
+                                            <span>🏁</span> <span>OFFICIAL RACE RESULTS</span>
+                                        </div>
+                                        <h4 class="text-lg sm:text-xl font-black text-white uppercase">Chequered Flag Classification</h4>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-mono text-slate-400">Winner:</span>
+                                        <div class="text-sm font-black text-yellow-400 font-mono">{{ latestRace.chequered_flag.winner }}</div>
+                                    </div>
                                 </div>
 
-                                <div class="space-y-1 font-mono text-xs max-h-64 overflow-y-auto pr-1">
+                                <div class="space-y-1.5 font-mono text-xs sm:text-sm">
                                     <div v-for="d in latestRace.chequered_flag.top10" :key="d.pos"
-                                         :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/40 border-slate-800/60 text-slate-300'"
-                                         class="flex items-center justify-between px-2.5 py-1.5 rounded-lg border">
-                                        <div class="flex items-center space-x-2 truncate">
-                                            <span :class="d.pos === 1 ? 'text-yellow-400 font-bold' : 'text-slate-500'">P{{ d.pos }}</span>
+                                         :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/50 border-slate-800/70 text-slate-300'"
+                                         class="flex items-center justify-between p-2 sm:p-2.5 rounded-xl border">
+                                        <div class="flex items-center space-x-2.5 truncate">
+                                            <span :class="d.pos === 1 ? 'text-yellow-400 font-black' : (d.pos <= 3 ? 'text-slate-300 font-bold' : 'text-slate-500')" class="w-6 text-center">P{{ d.pos }}</span>
                                             <span class="truncate">{{ d.name }}</span>
+                                            <span class="text-slate-500 text-[11px] hidden sm:inline">({{ d.team }})</span>
                                             <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
                                             <span v-if="d.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded font-black">FL</span>
                                         </div>
-                                        <span class="text-green-400 font-bold ml-2 shrink-0">+{{ d.pts }}pts</span>
+                                        <span class="text-green-400 font-bold ml-2 shrink-0">+{{ d.pts }} pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-yellow-500/40 rounded-2xl p-4 sm:p-5 shadow-xl space-y-2">
-                                <h4 class="text-[11px] font-mono font-bold uppercase tracking-widest text-yellow-400">Your Team Performance</h4>
-                                <div class="space-y-1.5">
-                                    <div v-for="yd in latestRace.user_team_perf" :key="yd.code"
-                                         class="flex justify-between items-center bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs sm:text-sm font-mono">
-                                        <div class="truncate mr-2">
-                                            <span class="font-bold text-white truncate block sm:inline">{{ yd.name }}</span>
-                                            <span v-if="yd.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded sm:ml-2">FASTEST LAP</span>
+                            <!-- Right: Your Team Performance & Winner Quote -->
+                            <div class="space-y-4 sm:space-y-6">
+                                <!-- Winner Hero Card -->
+                                <div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-2">
+                                    <div class="text-[10px] text-yellow-400 font-mono uppercase tracking-widest font-bold">Grand Prix Winner</div>
+                                    <h4 class="text-xl sm:text-2xl font-black text-white uppercase">{{ latestRace.chequered_flag.winner }}</h4>
+                                    <p class="text-xs text-slate-400 font-mono">{{ latestRace.chequered_flag.winner_team }}</p>
+                                    <p v-if="latestRace.chequered_flag.winner_quote" class="text-xs text-slate-300 italic pt-1 border-t border-slate-800/80">
+                                        "{{ latestRace.chequered_flag.winner_quote }}"
+                                    </p>
+                                </div>
+
+                                <!-- Your Team Performance -->
+                                <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-yellow-500/50 rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
+                                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                        <h4 class="text-xs font-mono font-bold uppercase tracking-widest text-yellow-400 flex items-center space-x-1.5">
+                                            <span>⭐</span> <span>Your Team Performance</span>
+                                        </h4>
+                                        <span class="text-[11px] font-mono text-slate-400">{{ userTeam ? userTeam.name : 'Your Team' }}</span>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <div v-for="yd in latestRace.user_team_perf" :key="yd.code"
+                                             class="flex justify-between items-center bg-slate-950/80 p-3 rounded-2xl border border-slate-800 text-xs sm:text-sm font-mono">
+                                            <div class="truncate mr-2">
+                                                <span class="font-bold text-white truncate block sm:inline">{{ yd.name }}</span>
+                                                <span v-if="yd.fl" class="text-[9px] bg-purple-600 text-white px-1 rounded sm:ml-2">FASTEST LAP</span>
+                                            </div>
+                                            <div class="text-right shrink-0">
+                                                <span :class="yd.dnf ? 'text-red-500' : 'text-yellow-400'" class="font-black text-sm sm:text-base mr-2">{{ yd.pos }}</span>
+                                                <span class="text-green-400 font-bold">+{{ yd.pts }} pts</span>
+                                            </div>
                                         </div>
-                                        <div class="text-right shrink-0">
-                                            <span :class="yd.dnf ? 'text-red-500' : 'text-yellow-400'" class="font-black text-sm mr-2">{{ yd.pos }}</span>
-                                            <span class="text-green-400 font-bold">+{{ yd.pts }}pts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                        <!-- 3. THEN THE GRAPHICAL VIEW: SEASON CHAMPIONSHIP & HISTORY LOG -->
+                        <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                        <div v-if="raceHistory.length > 0" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 backdrop-blur">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                                <div>
+                                    <h4 class="font-black uppercase text-white tracking-wider text-sm sm:text-base flex items-center space-x-2">
+                                        <span>📈</span> <span>Season Progression & Telemetry Log</span>
+                                    </h4>
+                                    <p class="text-[11px] text-slate-400 font-mono">{{ raceHistory.length }} of {{ totalRaces }} Races Completed</p>
+                                </div>
+
+                                <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
+                                    <button @click="telemetryTab = 'graph'" 
+                                            :class="telemetryTab === 'graph' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                            class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                        📊 Graph
+                                    </button>
+                                    <button @click="telemetryTab = 'log'" 
+                                            :class="telemetryTab === 'log' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
+                                            class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
+                                        📜 History Log
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 1. GRAPHICAL VIEW: SVG PROGRESSION CHART -->
+                            <div v-if="telemetryTab === 'graph'" class="space-y-3">
+                                <div class="flex items-center justify-between text-xs font-mono">
+                                    <div class="flex items-center space-x-3 text-[11px]">
+                                        <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-red-500 rounded"></span> <span class="text-slate-300">Team Total</span></span>
+                                        <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-cyan-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[0].name.split(' ')[0] : 'D1' }}</span></span>
+                                        <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-yellow-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[1].name.split(' ')[0] : 'D2' }}</span></span>
+                                    </div>
+                                    <div class="flex items-center space-x-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-[10px]">
+                                        <button @click="graphMetric = 'pts'" :class="graphMetric === 'pts' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Cumulative Pts</button>
+                                        <span class="text-slate-600">&bull;</span>
+                                        <button @click="graphMetric = 'pos'" :class="graphMetric === 'pos' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Finish Position</button>
+                                    </div>
+                                </div>
+
+                                <!-- Pure SVG Chart -->
+                                <div class="bg-slate-950/80 p-2 sm:p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
+                                    <svg viewBox="0 0 640 180" class="w-full h-auto overflow-visible">
+                                        <!-- Gridlines -->
+                                        <line x1="40" y1="25" x2="600" y2="25" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                        <line x1="40" y1="65" x2="600" y2="65" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                        <line x1="40" y1="105" x2="600" y2="105" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                        <line x1="40" y1="145" x2="600" y2="145" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
+                                        <line x1="40" y1="155" x2="600" y2="155" stroke="#334155" stroke-width="1" />
+
+                                        <!-- Cumulative Points View -->
+                                        <template v-if="graphMetric === 'pts'">
+                                            <polyline :points="teamPointsPath" fill="none" stroke="#E10600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                            <polyline :points="d1PointsPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <polyline :points="d2PointsPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        </template>
+
+                                        <!-- Finish Position View -->
+                                        <template v-else>
+                                            <polyline :points="d1PosPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <polyline :points="d2PosPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        </template>
+
+                                        <!-- Nodes on completed races -->
+                                        <template v-if="raceHistory.length > 0">
+                                            <circle v-for="(r, idx) in raceHistory" :key="'t'+idx"
+                                                    :cx="40 + (idx / Math.max(1, totalRaces - 1)) * 560"
+                                                    :cy="graphMetric === 'pts' ? (155 - (r.team_cum_pts / maxHistoryPoints) * 130) : (25 + ((r.d1_pos === 'DNF' ? 22 : r.d1_pos) - 1) / 21 * 130)"
+                                                    r="3.5" fill="#E10600" stroke="#FFF" stroke-width="1" />
+                                        </template>
+                                    </svg>
+                                    <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1 px-4">
+                                        <span>Round 1 (Melbourne)</span>
+                                        <span>Mid-Season (Spa)</span>
+                                        <span>Final Round</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. COMPLETED RACES LOG -->
+                            <div v-if="telemetryTab === 'log'" class="space-y-2 max-h-72 overflow-y-auto pr-1 font-mono text-xs">
+                                <div v-for="hr in raceHistory" :key="hr.round"
+                                     class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between">
+                                    <div class="flex items-center space-x-2.5 truncate mr-2">
+                                        <span class="bg-red-600/20 text-red-400 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">R{{ hr.round }}</span>
+                                        <div class="truncate">
+                                            <span class="font-bold text-white truncate block sm:inline">{{ hr.track }}</span>
+                                            <span class="text-slate-400 text-[11px] block sm:inline sm:ml-2">Winner: <b class="text-slate-300">{{ hr.winner }}</b></span>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- 📈 GRAPHICAL VIEW & COMPLETED RACES LOG -->
-                    <div v-if="raceHistory.length > 0" class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 backdrop-blur">
-                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                            <div>
-                                <h4 class="font-black uppercase text-white tracking-wider text-sm sm:text-base flex items-center space-x-2">
-                                    <span>📈</span> <span>Season Progression & Telemetry Log</span>
-                                </h4>
-                                <p class="text-[11px] text-slate-400 font-mono">{{ raceHistory.length }} of {{ totalRaces }} Races Completed</p>
-                            </div>
-
-                            <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800 font-mono text-xs">
-                                <button @click="telemetryTab = 'graph'" 
-                                        :class="telemetryTab === 'graph' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
-                                        class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
-                                    📊 Graph
-                                </button>
-                                <button @click="telemetryTab = 'log'" 
-                                        :class="telemetryTab === 'log' ? 'bg-red-600 text-white font-bold' : 'text-slate-400 hover:text-white'"
-                                        class="px-3 py-1 rounded-lg transition uppercase text-[10px] sm:text-[11px]">
-                                    📜 History Log
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 1. GRAPHICAL VIEW: SVG PROGRESSION CHART -->
-                        <div v-if="telemetryTab === 'graph'" class="space-y-3">
-                            <div class="flex items-center justify-between text-xs font-mono">
-                                <div class="flex items-center space-x-3 text-[11px]">
-                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-red-500 rounded"></span> <span class="text-slate-300">Team Total</span></span>
-                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-cyan-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[0].name.split(' ')[0] : 'D1' }}</span></span>
-                                    <span class="flex items-center space-x-1.5"><span class="w-3 h-1 bg-yellow-400 rounded"></span> <span class="text-slate-300">{{ userTeam ? userTeam.drivers[1].name.split(' ')[0] : 'D2' }}</span></span>
-                                </div>
-                                <div class="flex items-center space-x-1 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-[10px]">
-                                    <button @click="graphMetric = 'pts'" :class="graphMetric === 'pts' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Cumulative Pts</button>
-                                    <span class="text-slate-600">&bull;</span>
-                                    <button @click="graphMetric = 'pos'" :class="graphMetric === 'pos' ? 'text-yellow-400 font-bold' : 'text-slate-500'">Finish Position</button>
-                                </div>
-                            </div>
-
-                            <!-- Pure SVG Chart -->
-                            <div class="bg-slate-950/80 p-2 sm:p-4 rounded-2xl border border-slate-800 relative overflow-hidden">
-                                <svg viewBox="0 0 640 180" class="w-full h-auto overflow-visible">
-                                    <!-- Gridlines -->
-                                    <line x1="40" y1="25" x2="600" y2="25" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
-                                    <line x1="40" y1="65" x2="600" y2="65" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
-                                    <line x1="40" y1="105" x2="600" y2="105" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
-                                    <line x1="40" y1="145" x2="600" y2="145" stroke="#1e293b" stroke-width="1" stroke-dasharray="3,3" />
-                                    <line x1="40" y1="155" x2="600" y2="155" stroke="#334155" stroke-width="1" />
-
-                                    <!-- Cumulative Points View -->
-                                    <template v-if="graphMetric === 'pts'">
-                                        <!-- Team Line (Red) -->
-                                        <polyline :points="teamPointsPath" fill="none" stroke="#E10600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-                                        <!-- Driver 1 Line (Cyan) -->
-                                        <polyline :points="d1PointsPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                        <!-- Driver 2 Line (Yellow) -->
-                                        <polyline :points="d2PointsPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    </template>
-
-                                    <!-- Finish Position View -->
-                                    <template v-else>
-                                        <polyline :points="d1PosPath" fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                        <polyline :points="d2PosPath" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    </template>
-
-                                    <!-- Nodes on last race -->
-                                    <template v-if="raceHistory.length > 0">
-                                        <circle v-for="(r, idx) in raceHistory" :key="'t'+idx"
-                                                :cx="40 + (idx / Math.max(1, totalRaces - 1)) * 560"
-                                                :cy="graphMetric === 'pts' ? (155 - (r.team_cum_pts / maxHistoryPoints) * 130) : (25 + ((r.d1_pos === 'DNF' ? 22 : r.d1_pos) - 1) / 21 * 130)"
-                                                r="3.5" fill="#E10600" stroke="#FFF" stroke-width="1" />
-                                    </template>
-                                </svg>
-                                <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1 px-4">
-                                    <span>Round 1 (Melbourne)</span>
-                                    <span>Mid-Season (Spa)</span>
-                                    <span>Final Round</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. COMPLETED RACES LOG -->
-                        <div v-if="telemetryTab === 'log'" class="space-y-2 max-h-72 overflow-y-auto pr-1 font-mono text-xs">
-                            <div v-for="hr in raceHistory" :key="hr.round"
-                                 class="bg-slate-950/70 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between">
-                                <div class="flex items-center space-x-2.5 truncate mr-2">
-                                    <span class="bg-red-600/20 text-red-400 font-bold px-1.5 py-0.5 rounded text-[10px] shrink-0">R{{ hr.round }}</span>
-                                    <div class="truncate">
-                                        <span class="font-bold text-white truncate block sm:inline">{{ hr.track }}</span>
-                                        <span class="text-slate-400 text-[11px] block sm:inline sm:ml-2">Winner: <b class="text-slate-300">{{ hr.winner }}</b></span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center space-x-3 shrink-0 text-right">
-                                    <div class="text-[11px] hidden sm:block">
-                                        <span class="text-cyan-400">{{ hr.d1_pos === 'DNF' ? 'DNF' : 'P'+hr.d1_pos }} (+{{ hr.d1_pts }})</span>
-                                        <span class="text-slate-600 mx-1">&bull;</span>
-                                        <span class="text-yellow-400">{{ hr.d2_pos === 'DNF' ? 'DNF' : 'P'+hr.d2_pos }} (+{{ hr.d2_pts }})</span>
-                                    </div>
-                                    <div class="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-green-400 font-bold text-xs">
-                                        +{{ hr.team_pts }} pts
+                                    <div class="flex items-center space-x-3 shrink-0 text-right">
+                                        <div class="text-[11px] hidden sm:block">
+                                            <span class="text-cyan-400">{{ hr.d1_pos === 'DNF' ? 'DNF' : 'P'+hr.d1_pos }} (+{{ hr.d1_pts }})</span>
+                                            <span class="text-slate-600 mx-1">&bull;</span>
+                                            <span class="text-yellow-400">{{ hr.d2_pos === 'DNF' ? 'DNF' : 'P'+hr.d2_pos }} (+{{ hr.d2_pts }})</span>
+                                        </div>
+                                        <div class="bg-slate-900 border border-slate-700 px-2 py-1 rounded text-green-400 font-bold text-xs">
+                                            +{{ hr.team_pts }} pts
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1105,6 +1239,8 @@
                     raceHistory: [],
                     telemetryTab: 'graph',
                     graphMetric: 'pts',
+                    inRaceMetric: 'pos',
+                    streamSpeed: 'normal',
                     isAutoRunning: false,
                     showStandingsModal: false,
                     liveStandings: null,
@@ -1344,10 +1480,41 @@
                         this.ws.send(JSON.stringify({ action: "next_race" }));
                     }
                 },
-                startAutoPlay() {
+                getInRacePoints(driver) {
+                    if (!driver || !driver.positions) return '';
+                    const totalPts = driver.positions.length;
+                    return driver.positions.map((pos, idx) => {
+                        const x = 40 + (idx / Math.max(1, totalPts - 1)) * 560;
+                        let y = 25;
+                        if (this.inRaceMetric === 'pos') {
+                            const p = (pos === 'DNF' || typeof pos !== 'number') ? 20 : pos;
+                            y = 25 + ((p - 1) / 19) * 125;
+                        } else {
+                            const gap = driver.gaps ? driver.gaps[idx] : 0;
+                            const g = (gap === 'DNF' || typeof gap !== 'number') ? 50 : Math.min(gap, 50);
+                            y = 25 + (g / 50) * 125;
+                        }
+                        return `${x},${y}`;
+                    }).join(' ');
+                },
+                getInRaceFinalY(driver) {
+                    if (!driver || !driver.positions) return 25;
+                    const lastIdx = driver.positions.length - 1;
+                    if (this.inRaceMetric === 'pos') {
+                        const p = (driver.positions[lastIdx] === 'DNF' || typeof driver.positions[lastIdx] !== 'number') ? 20 : driver.positions[lastIdx];
+                        return 25 + ((p - 1) / 19) * 125;
+                    } else {
+                        const gap = driver.gaps ? driver.gaps[lastIdx] : 0;
+                        const g = (gap === 'DNF' || typeof gap !== 'number') ? 50 : Math.min(gap, 50);
+                        return 25 + (g / 50) * 125;
+                    }
+                },
+                startAutoPlay(speed = null) {
+                    if (speed) this.streamSpeed = speed;
                     this.isAutoRunning = true;
+                    const delay = this.streamSpeed === 'fast' ? 2.5 : 4.0;
                     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                        this.ws.send(JSON.stringify({ action: "auto_play", delay: 1.2 }));
+                        this.ws.send(JSON.stringify({ action: "auto_play", delay: delay }));
                     }
                 },
                 pauseAutoPlay() {

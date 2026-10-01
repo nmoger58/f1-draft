@@ -51,6 +51,26 @@ def index():
 # In-memory session store
 SESSIONS = {}
 
+TEAM_PALETTE = {
+    "Ferrari": "#EF4444",
+    "Red Bull": "#3B82F6",
+    "Mercedes": "#06B6D4",
+    "McLaren": "#F97316",
+    "Aston Martin": "#10B981",
+    "Alpine": "#F43F5E",
+    "Williams": "#38BDF8",
+    "RB": "#818CF8",
+    "Haas": "#94A3B8",
+    "Audi": "#84CC16",
+    "Cadillac": "#C084FC"
+}
+
+def resolve_team_color(team_name):
+    for k, col in TEAM_PALETTE.items():
+        if k.lower() in str(team_name).lower():
+            return col
+    return "#EAB308"
+
 def strip_ansi(text):
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     return ansi_escape.sub('', text)
@@ -513,11 +533,215 @@ def build_race_payload(sess, race_num):
             ]
         }
 
+    # 9. In-Race Lead Telemetry (Lead vs Lap for Top 5 + User's Drivers)
+    focus_drivers = []
+    for d in fin_r[:5]:
+        if d not in focus_drivers:
+            focus_drivers.append(d)
+    for d in user_ds:
+        if d not in focus_drivers:
+            focus_drivers.append(d)
+
+    total_laps = track.get("laps", 56) if isinstance(track, dict) else 56
+    lap_checkpoints = [1, 15, 30, 45, total_laps]
+
+    all_grid_drivers = list(grid_pos.keys())
+    l1_scores = {d: grid_pos.get(d, 10) + rng.uniform(-0.6, 0.6) for d in all_grid_drivers}
+    l1_sorted = sorted(all_grid_drivers, key=lambda d: l1_scores[d])
+    l1_pos_map = {d: i + 1 for i, d in enumerate(l1_sorted)}
+
+    l15_scores = {d: 0.6 * l1_pos_map.get(d, 10) + 0.4 * (finish_pos.get(d, 15) if d in fin_r else 19) + rng.uniform(-0.8, 0.8) for d in all_grid_drivers}
+    l15_sorted = sorted(all_grid_drivers, key=lambda d: l15_scores[d])
+    l15_pos_map = {d: i + 1 for i, d in enumerate(l15_sorted)}
+
+    l30_pos_map = {car["code"]: car["pos"] for car in lap30_snapshot}
+    for d in all_grid_drivers:
+        if d not in l30_pos_map:
+            l30_pos_map[d] = max(1, min(20, round(0.3 * l1_pos_map.get(d, 10) + 0.7 * (finish_pos.get(d, 15) if d in fin_r else 20))))
+
+    l45_scores = {d: 0.2 * l30_pos_map.get(d, 10) + 0.8 * (finish_pos.get(d, 18) if d in fin_r else 21) + rng.uniform(-0.5, 0.5) for d in all_grid_drivers}
+    l45_sorted = sorted(all_grid_drivers, key=lambda d: l45_scores[d])
+    l45_pos_map = {d: i + 1 for i, d in enumerate(l45_sorted)}
+
+    def calc_gap(p, lap_weight):
+        if p == 1:
+            return 0.0
+        return round((p - 1) * lap_weight + rng.uniform(0.1, 0.6), 2)
+
+    in_race_telemetry = {
+        "laps": lap_checkpoints,
+        "drivers": []
+    }
+    for d in focus_drivers:
+        t_name = season.team_of.get(d, "Unknown")
+        is_usr = d in user_ds
+        col = resolve_team_color(t_name)
+        if is_usr:
+            col = "#FACC15" if d == user_ds[0] else "#38BDF8"
+
+        p1 = l1_pos_map.get(d, grid_pos.get(d, 10))
+        p15 = l15_pos_map.get(d, p1)
+        p30 = l30_pos_map.get(d, p15)
+        p45 = l45_pos_map.get(d, p30)
+        p_end = finish_pos.get(d, "DNF")
+
+        g1 = calc_gap(p1, 0.6)
+        g15 = calc_gap(p15, 1.5)
+        g30 = calc_gap(p30, 2.3)
+        g45 = calc_gap(p45, 3.0)
+        g_end = calc_gap(p_end, 3.6) if p_end != "DNF" else None
+
+        in_race_telemetry["drivers"].append({
+            "code": d,
+            "name": dname(drivers, d),
+            "team": t_name,
+            "is_user": is_usr,
+            "color": col,
+            "final_pos": p_end,
+            "positions": [p1, p15, p30, p45, p_end if p_end != "DNF" else 20],
+            "gaps": [g1, g15, g30, g45, g_end if g_end is not None else 55.0]
+        })
+
+    # 10. Chronological Race Story & Commentary Feed
+    race_commentary = []
+    weather_str = "Rain falling, intermediate tyres fitted across the grid" if log["wet"] else "Dry and warm, soft and medium compounds selected"
+    pole_d = grid_order[0] if grid_order else (fin_r[0] if fin_r else "")
+    pole_name = dname(drivers, pole_d)
+
+    race_commentary.append({
+        "lap": 0,
+        "badge": "FORMATION LAP",
+        "type": "briefing",
+        "title": "Grid Formation & Strategy",
+        "text": f"22 machines line up on the grid. {weather_str}. Pole sitter {pole_name} leads the pack onto the starting grid.",
+        "is_user": False
+    })
+
+    user_d1_name = dname(drivers, user_ds[0])
+    user_d1_p1 = l1_pos_map.get(user_ds[0], 10)
+    l1_lead_d = l1_sorted[0]
+    l1_lead_name = dname(drivers, l1_lead_d)
+
+    if l1_lead_d == pole_d:
+        start_desc = f"{pole_name} gets a clean launch to hold the lead into Turn 1!"
+    else:
+        start_desc = f"Stunning launch from {l1_lead_name}! Sweeping around the outside to snatch P1 from {pole_name} into the opening corner!"
+
+    user_start_desc = f"Your driver {user_d1_name} charges into P{user_d1_p1} after a wheel-to-wheel opening lap fight."
+    race_commentary.append({
+        "lap": 1,
+        "badge": "LIGHTS OUT",
+        "type": "start",
+        "title": "Turn 1 Battle & Launch",
+        "text": f"LIGHTS OUT AND AWAY WE GO! {start_desc} {user_start_desc}",
+        "is_user": True
+    })
+
+    p2_d = l15_sorted[1] if len(l15_sorted) > 1 else l15_sorted[0]
+    race_commentary.append({
+        "lap": 8,
+        "badge": "DRS ACTIVE",
+        "type": "battle",
+        "title": "High Speed Slipstream Duel",
+        "text": f"DRS enabled! {dname(drivers, p2_d)} opens the rear wing and ducks out of the slipstream, hunting down the leader with 330 km/h top speed down the main straight.",
+        "is_user": p2_d in user_ds
+    })
+
+    pit_lead = l15_sorted[0]
+    race_commentary.append({
+        "lap": 18,
+        "badge": "PIT STOP",
+        "type": "pit",
+        "title": "Pit Window Opens: Undercut Strategy",
+        "text": f"'BOX, BOX, BOX!' - {dname(drivers, pit_lead)} enters pit lane for fresh hard tyres. Crew nails a rapid 2.3s stationary stop to defend track position!",
+        "is_user": pit_lead in user_ds
+    })
+
+    if log["sc"] and log["sc_lap"]:
+        race_commentary.append({
+            "lap": log["sc_lap"],
+            "badge": "SAFETY CAR",
+            "type": "sc",
+            "title": "Safety Car Deployed",
+            "text": f"SAFETY CAR! {rng.choice(INCIDENT_COMMENTARY)} Field bunches up nose-to-tail, erasing all built-up time gaps.",
+            "is_user": False
+        })
+    elif log["vsc"] and log["vsc_lap"]:
+        race_commentary.append({
+            "lap": log["vsc_lap"],
+            "badge": "VSC",
+            "type": "vsc",
+            "title": "Virtual Safety Car",
+            "text": f"VSC deployed! Drivers restricted to delta times as marshals quickly recover debris.",
+            "is_user": False
+        })
+    elif log["dnfs"]:
+        dnf_d = log["dnfs"][0]
+        race_commentary.append({
+            "lap": 30,
+            "badge": "RETIREMENT",
+            "type": "dnf",
+            "title": "Engine Failure Drama",
+            "text": f"YELLOW FLAG! Smoke billows from {dname(drivers, dnf_d)}'s car as they coast into the escape road with terminal failure.",
+            "is_user": dnf_d in user_ds
+        })
+    else:
+        race_commentary.append({
+            "lap": 30,
+            "badge": "MID-RACE DUEL",
+            "type": "battle",
+            "title": "Wheel-To-Wheel Combat",
+            "text": "Intense wheel-to-wheel combat in the front pack! Less than 1.5s covers the podium fight as tyres begin to blister.",
+            "is_user": False
+        })
+
+    user_focus_d = user_ds[0]
+    u_p = finish_pos.get(user_focus_d, 10)
+    radio_quotes = [
+        f"Radio from your pit wall: 'Keep this relentless pace {dname(drivers, user_focus_d)}, tyre degradation is looking great and we are fighting for P{u_p}!'",
+        f"Radio from your pit wall: 'Target lap time 1:21.8 - bring the car home in the points!'",
+        f"Radio to {dname(drivers, user_focus_d)}: 'Mode 6 on exit, maximum deploy down the back straight!'"
+    ]
+    race_commentary.append({
+        "lap": 38,
+        "badge": "TEAM RADIO",
+        "type": "radio",
+        "title": "Garage Intercom",
+        "text": rng.choice(radio_quotes),
+        "is_user": True
+    })
+
+    fl_d = log["fl"] if log["fl"] else (fin_r[0] if fin_r else None)
+    if fl_d:
+        race_commentary.append({
+            "lap": 46,
+            "badge": "PURPLE SECTOR",
+            "type": "fl",
+            "title": "Fastest Lap Charge",
+            "text": f"{dname(drivers, fl_d)} lights up the timing screens with purple sectors in all three sectors to set the fastest lap of the race!",
+            "is_user": fl_d in user_ds
+        })
+
+    winner_name = dname(drivers, winner) if winner else "Unknown"
+    winner_t = season.team_of.get(winner, "Unknown")
+    user_pts_race = sum(RACE_PTS[finish_pos[d] - 1] for d in user_ds if d in fin_r and finish_pos[d] <= len(RACE_PTS))
+    race_commentary.append({
+        "lap": total_laps,
+        "badge": "CHEQUERED FLAG",
+        "type": "finish",
+        "title": f"{winner_name} Wins!",
+        "text": f"CHEQUERED FLAG! {winner_name} powers across the finish line to take victory for {winner_t}! Your team secures +{user_pts_race} championship points this round.",
+        "is_user": True
+    })
+
     return {
         "round": race_num,
         "total_rounds": total,
         "track": track["name"],
         "circuit": track.get("circuit", ""),
+        "total_laps": total_laps,
+        "in_race_telemetry": in_race_telemetry,
+        "race_commentary": race_commentary,
         "flavour": TRACK_FLAVOUR.get(track["name"], ""),
         "wet": bool(log["wet"]),
         "sprint": bool(track["sprint"]),
@@ -773,7 +997,7 @@ async def stream_season(websocket: WebSocket, session_id: str):
                 action = msg.get("action")
                 if action == "auto_play":
                     sess["auto_running"] = True
-                    sess["auto_delay"] = max(0.2, min(5.0, float(msg.get("delay", 1.0))))
+                    sess["auto_delay"] = max(1.0, min(10.0, float(msg.get("delay", 4.0))))
                 elif action == "next_race":
                     pass
                 elif action == "get_standings":
@@ -804,15 +1028,21 @@ async def stream_season(websocket: WebSocket, session_id: str):
             })
 
             if sess.get("auto_running"):
-                await asyncio.sleep(sess.get("auto_delay", 1.0))
-                # Check if client sent pause during auto-run
-                # Non-blocking receive check
-                try:
-                    incoming = await asyncio.wait_for(websocket.receive_json(), timeout=0.01)
-                    if incoming.get("action") == "pause":
-                        sess["auto_running"] = False
-                except asyncio.TimeoutError:
-                    pass
+                total_delay = sess.get("auto_delay", 4.0)
+                elapsed = 0.0
+                while elapsed < total_delay and sess.get("auto_running"):
+                    slice_time = min(0.25, total_delay - elapsed)
+                    await asyncio.sleep(slice_time)
+                    elapsed += slice_time
+                    try:
+                        incoming = await asyncio.wait_for(websocket.receive_json(), timeout=0.01)
+                        if incoming.get("action") == "pause":
+                            sess["auto_running"] = False
+                            break
+                        elif incoming.get("action") == "auto_play":
+                            sess["auto_delay"] = max(1.0, min(10.0, float(incoming.get("delay", 4.0))))
+                    except asyncio.TimeoutError:
+                        pass
 
     except WebSocketDisconnect:
         pass
