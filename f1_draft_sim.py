@@ -485,9 +485,10 @@ def build_grid(teams, user_drivers, car_key, principal_key, rng):
     # Parse the versioned car key to make a nice team name
     if "|" in car_key:
         base, yr = car_key.rsplit("|", 1)
-        USER_TEAM = f"* {base} ({yr})"
+        team_name = f"* {base} ({yr})"
     else:
-        USER_TEAM = f"* {car_key} (Your Team)"
+        team_name = f"* {car_key} (Your Team)"
+    USER_TEAM = team_name  # Preserve for CLI single-user mode
 
     grid = {t: dict(v, drivers=list(v["drivers"])) for t, v in teams.items()}
     
@@ -495,11 +496,11 @@ def build_grid(teams, user_drivers, car_key, principal_key, rng):
     base_team = car_key.split("|")[0] if "|" in car_key else car_key
     original = grid.pop(base_team)
     
-    grid[USER_TEAM] = dict(original, principal=principal_key, drivers=list(user_drivers), user=True)
+    grid[team_name] = dict(original, principal=principal_key, drivers=list(user_drivers), user=True)
 
     ai_p = [p for p in PRINCIPALS if p != principal_key] or list(PRINCIPALS)
     rng.shuffle(ai_p)
-    for i, t in enumerate(t for t in grid if t != USER_TEAM):
+    for i, t in enumerate(t for t in grid if t != team_name):
         grid[t]["principal"] = ai_p[i % len(ai_p)]      # never runs out of principals
 
     displaced = [d for d in original["drivers"] if d not in user_drivers]

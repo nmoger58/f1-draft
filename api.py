@@ -9,6 +9,7 @@ import asyncio
 import os
 import copy
 import re
+import time
 
 # Import simulator logic and data
 from f1_data import (
@@ -227,6 +228,13 @@ def submit_draft(req: DraftSubmitRequest):
 
     season = Season(grid, sess_drivers, rng, req.parity)
 
+    # Periodic cleanup of stale sessions (> 2 hours old) to prevent memory leaks
+    now = time.time()
+    if len(SESSIONS) > 50:
+        stale_sids = [sid for sid, s in list(SESSIONS.items()) if now - s.get("created_at", now) > 7200]
+        for sid in stale_sids:
+            SESSIONS.pop(sid, None)
+
     session_id = str(uuid.uuid4())
     SESSIONS[session_id] = {
         "season": season,
@@ -235,7 +243,9 @@ def submit_draft(req: DraftSubmitRequest):
         "grid": grid,
         "rng": rng,
         "current_race": 0,
-        "auto_running": False
+        "auto_running": False,
+        "created_at": now,
+        "last_accessed": now
     }
 
     grid_summary = []
@@ -541,6 +551,7 @@ async def stream_season(websocket: WebSocket, session_id: str):
         return
 
     sess = SESSIONS[session_id]
+    sess["last_accessed"] = time.time()
     season = sess["season"]
     user_ds = sess["user_ds"]
     user_team_key = sess["user_team_key"]
