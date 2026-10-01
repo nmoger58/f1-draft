@@ -336,15 +336,41 @@ def build_race_payload(sess, race_num):
             "text": f"{title}: {dname(drivers, d)} has {wins} wins here - strong edge at this venue."
         })
         
-    qualifying_top5 = [
-        {
-            "pos": i + 1,
-            "code": d,
-            "name": dname(drivers, d),
-            "is_user": d in user_ds
-        }
-        for i, d in enumerate(log.get("grid_top5", [])[:5])
-    ]
+    pole_d = grid_order[0] if grid_order else None
+    qualifying_data = {
+        "pole": dname(drivers, pole_d) if pole_d else "Unknown",
+        "pole_team": season.team_of.get(pole_d, "Unknown") if pole_d else "",
+        "top10": [
+            {
+                "pos": i + 1,
+                "code": d,
+                "name": dname(drivers, d),
+                "team": season.team_of.get(d, "Unknown"),
+                "is_user": d in user_ds
+            }
+            for i, d in enumerate(grid_order[:10])
+        ],
+        "user_grid": [
+            {
+                "pos": grid_pos.get(d, 20),
+                "code": d,
+                "name": dname(drivers, d),
+                "team": season.team_of.get(d, "Unknown")
+            }
+            for d in user_ds
+        ],
+        "full_grid": [
+            {
+                "pos": i + 1,
+                "code": d,
+                "name": dname(drivers, d),
+                "team": season.team_of.get(d, "Unknown"),
+                "is_user": d in user_ds
+            }
+            for i, d in enumerate(grid_order)
+        ]
+    }
+    qualifying_top5 = qualifying_data["top10"][:5]
     
     # 2. Sprint results if applicable
     sprint_data = None
@@ -746,6 +772,7 @@ def build_race_payload(sess, race_num):
         "wet": bool(log["wet"]),
         "sprint": bool(track["sprint"]),
         "weekend_notes": weekend_notes,
+        "qualifying_data": qualifying_data,
         "qualifying_top5": qualifying_top5,
         "sprint_data": sprint_data,
         "incidents": incidents,

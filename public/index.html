@@ -529,6 +529,87 @@
                             </div>
                         </div>
 
+                        <!-- 🚦 OFFICIAL QUALIFYING & STARTING GRID (BEFORE THE RACE) -->
+                        <div v-if="latestRace.qualifying_data" class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                                <div>
+                                    <div class="text-[10px] text-yellow-400 font-mono font-black uppercase tracking-widest flex items-center space-x-1.5">
+                                        <span>⏱️</span> <span>OFFICIAL QUALIFYING SHOOTOUT</span>
+                                    </div>
+                                    <h4 class="text-base sm:text-xl font-black uppercase text-white tracking-wider">
+                                        Starting Grid & Qualifying Results
+                                    </h4>
+                                </div>
+
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-mono text-slate-400 hidden sm:inline">Pole Position:</span>
+                                    <div class="bg-yellow-500/20 border border-yellow-500/50 px-3 py-1 rounded-xl text-yellow-300 font-mono text-xs font-bold flex items-center space-x-1.5">
+                                        <span>🏆</span>
+                                        <span>{{ latestRace.qualifying_data.pole }}</span>
+                                        <span class="text-[10px] text-yellow-400/80">({{ latestRace.qualifying_data.pole_team }})</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Your Starting Grid Positions Callout Banner -->
+                            <div class="bg-gradient-to-r from-yellow-500/15 via-slate-950 to-slate-950 border border-yellow-500/40 p-3 sm:p-4 rounded-2xl flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center space-x-2.5">
+                                    <span class="text-lg">🚦</span>
+                                    <div>
+                                        <div class="text-xs uppercase font-mono font-bold text-yellow-400">Your Grid Launch Positions</div>
+                                        <div class="text-xs text-slate-300 font-mono">
+                                            <span v-for="(ug, uIdx) in latestRace.qualifying_data.user_grid" :key="ug.code">
+                                                <b class="text-white font-bold">{{ ug.name }}</b> starting <b class="text-yellow-400 font-black">P{{ ug.pos }}</b><span v-if="uIdx < latestRace.qualifying_data.user_grid.length - 1" class="text-slate-500 mx-2">&bull;</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button @click="showFullGrid = !showFullGrid" 
+                                        class="text-xs font-mono text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg border border-slate-700 transition">
+                                    {{ showFullGrid ? 'Show Top 10' : 'View Full Grid (P1–P22)' }}
+                                </button>
+                            </div>
+
+                            <!-- Starting Grid Classification Table (Top 10 or Full 22) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                                <div v-for="d in (showFullGrid ? latestRace.qualifying_data.full_grid : latestRace.qualifying_data.top10)" :key="'quali-' + d.code"
+                                     :class="d.is_user ? 'bg-yellow-500/20 border-yellow-500/60 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800/70 text-slate-300'"
+                                     class="flex items-center justify-between p-2.5 rounded-xl border">
+                                    <div class="flex items-center space-x-2.5 truncate">
+                                        <span :class="d.pos === 1 ? 'text-yellow-400 font-black' : (d.pos <= 3 ? 'text-slate-200 font-bold' : 'text-slate-500')" class="w-6 text-center">P{{ d.pos }}</span>
+                                        <span class="truncate">{{ d.name }}</span>
+                                        <span class="text-slate-500 text-[11px] truncate hidden sm:inline">({{ d.team }})</span>
+                                        <span v-if="d.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black shrink-0">YOU</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-widest shrink-0 ml-1">
+                                        {{ d.pos === 1 ? 'POLE' : (d.pos <= 10 ? 'Q3' : (d.pos <= 15 ? 'Q2' : 'Q1')) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Saturday Sprint Race Results if Sprint Weekend -->
+                            <div v-if="latestRace.sprint_data" class="mt-3 pt-3 border-t border-slate-800 space-y-2">
+                                <div class="flex items-center justify-between text-xs font-mono">
+                                    <span class="font-bold text-yellow-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                        <span>⚡</span> <span>Saturday Sprint Race (Points Awarded P1–P8)</span>
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs font-mono">
+                                    <div v-for="sd in latestRace.sprint_data.top8" :key="'sprint-'+sd.code"
+                                         :class="sd.is_user ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300 font-bold' : 'bg-slate-950/60 border-slate-800 text-slate-300'"
+                                         class="flex justify-between items-center px-3 py-1.5 rounded-lg border">
+                                        <div class="flex items-center space-x-2 truncate">
+                                            <span class="text-slate-500">P{{ sd.pos }}</span>
+                                            <span class="truncate">{{ sd.name }}</span>
+                                            <span v-if="sd.is_user" class="text-[9px] bg-yellow-400 text-slate-950 px-1 rounded font-black">YOU</span>
+                                        </div>
+                                        <span class="text-green-400 font-bold">+{{ sd.pts }}pts</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 🏁 IN-RACE "LEAD IN RACE VS LAP" GRAPHICAL VIEW (ABOVE COMMENTARY) -->
                         <div v-if="latestRace.in_race_telemetry && latestRace.in_race_telemetry.drivers.length" 
                              class="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4">
@@ -1241,6 +1322,7 @@
                     graphMetric: 'pts',
                     inRaceMetric: 'pos',
                     streamSpeed: 'normal',
+                    showFullGrid: false,
                     isAutoRunning: false,
                     showStandingsModal: false,
                     liveStandings: null,
