@@ -120,7 +120,25 @@ export class TyreModel {
     this.wear = 0.0;           // 0.0 = brand new, 1.0 = fully depleted
     this.ageLaps = 0;
     this.distanceM = 0;        // distance rolled on this set
-    this.temp = this.spec.blanketTemp || (this.spec.optTempPeak - 15); // Blanket tyre warmer temp
+    const baseTemp = this.spec.blanketTemp || (this.spec.optTempPeak - 15);
+    this.temp = baseTemp; // Representative average temp
+    this.surfaceTemp = baseTemp;
+    this.carcassTemp = baseTemp - 2;
+
+    // Dual-axle thermal states: front vs rear surface and carcass
+    this.axles = {
+      front: { surf: baseTemp, carcass: baseTemp - 2 },
+      rear:  { surf: baseTemp, carcass: baseTemp - 2 }
+    };
+
+    // 4-corner breakdown (FL, FR, RL, RR)
+    this.corners = {
+      FL: { surf: baseTemp, carcass: baseTemp - 2 },
+      FR: { surf: baseTemp, carcass: baseTemp - 2 },
+      RL: { surf: baseTemp, carcass: baseTemp - 2 },
+      RR: { surf: baseTemp, carcass: baseTemp - 2 }
+    };
+
     this.blistering = 0.0;
     this.graining = 0.0;
     this.flatSpot = 0.0;
@@ -139,14 +157,15 @@ export class TyreModel {
    * @param {number} trackWetness     – surface water level (0..1)
    * @param {number} trackTemp        – track temperature (°C)
    * @param {number} driverManagement – driver skill modifier (0.5..1.0)
+   * @param {object} [extra]          – optional context { isWheelspinning, inDirtyAir, brake }
    */
-  update(dt, speedMps, lateralLoad, longitudinalLoad, trackWetness, trackTemp, driverManagement = 0.75) {
+  update(dt, speedMps, lateralLoad, longitudinalLoad, trackWetness, trackTemp, driverManagement = 0.75, extra = {}) {
     const spec = this.spec;
     const isWetCompound = (this.compound === 'intermediate' || this.compound === 'wet');
 
     this.distanceM += speedMps * dt;
 
-    // ── 1. Heat Generation ────────────────────────────────────────────────────
+    // ── 1. Heat Generation & Dual-Axle Workload ──────────────────────────────
     // Load energy: friction work done by tyre from cornering and traction
     const loadFactor = (Math.abs(lateralLoad) * 0.7 + Math.abs(longitudinalLoad) * 0.5) / 25;
     const speedRatio = Math.min(1.5, speedMps / 60);
@@ -160,19 +179,52 @@ export class TyreModel {
 
     const heatGen = loadFactor * speedRatio * spec.heatGenRate * compoundMismatchFriction * 18 * dt;
 
-    // ── 2. Heat Dissipation ──────────────────────────────────────────────────
-    // Airflow convective cooling
-    const airflowCool = (this.temp - Math.max(15, trackTemp - 5)) * spec.coolingRate * (1 + speedMps / 50) * dt;
+    // Dual-axle specific thermal generation:
+    // Front axle heats from steering scrub, corner entry sliding, dirty air understeer, and braking
+    const dirtyAirPenalty = extra.inDirtyAir ? 1.25 : 1.0;
+    const brakeHeat = (extra.brake || 0) * 8.0 * (speedMps / 50);
+    const frontHeat = (Math.abs(lateralLoad) * 0.8 * dirtyAirPenalty + brakeHeat) * speedRatio * spec.heatGenRate * 1.2 * dt;
+
+    // Rear axle heats from traction acceleration and wheelspin slip
+    const wheelspinHeat = (extra.isWheelspinning ? 22.0 : 0) + Math.max(0, longitudinalLoad) * 0.9;
+    const rearHeat = (Math.abs(lateralLoad) * 0.5 + wheelspinHeat) * speedRatio * spec.heatGenRate * 1.2 * dt;
+
+    // ── 2. Heat Dissipation & Airflow / Water Cooling ────────────────────────
+    const effectiveAmbient = Math.max(15, trackTemp - 5);
+    const airflowCoolRate = spec.coolingRate * (1 + speedMps / 50) * dt;
 
     // Water cooling: water conducts heat away rapidly. Slicks in heavy rain cool excessively
     const waterCoolingFactor = trackWetness * (isWetCompound ? 1.8 : 4.5);
-    const waterCool = (this.temp - (trackTemp - 3)) * waterCoolingFactor * 0.15 * (1 + speedMps / 40) * dt;
+    const waterCoolRate = waterCoolingFactor * 0.15 * (1 + speedMps / 40) * dt;
+    const totalCoolFactor = airflowCoolRate + waterCoolRate;
 
-    // Temperature update
-    this.temp = Math.max(15, Math.min(150, this.temp + heatGen - airflowCool - waterCool));
+    // Update front & rear surface temperatures
+    this.axles.front.surf = Math.max(15, Math.min(150, this.axles.front.surf + frontHeat - (this.axles.front.surf - effectiveAmbient) * totalCoolFactor));
+    this.axles.rear.surf  = Math.max(15, Math.min(150, this.axles.rear.surf  + rearHeat  - (this.axles.rear.surf  - effectiveAmbient) * totalCoolFactor));
+
+    // Conduction between surface and carcass (hysteresis lag)
+    const conductionRate = 0.08 * dt;
+    this.axles.front.carcass += (this.axles.front.surf - this.axles.front.carcass) * conductionRate;
+    this.axles.rear.carcass  += (this.axles.rear.surf  - this.axles.rear.carcass)  * conductionRate;
+
+    // Overall representative temperatures
+    this.surfaceTemp = Number(((this.axles.front.surf + this.axles.rear.surf) * 0.5).toFixed(1));
+    this.carcassTemp = Number(((this.axles.front.carcass + this.axles.rear.carcass) * 0.5).toFixed(1));
+    this.temp = Math.round((this.surfaceTemp + this.carcassTemp) * 0.5);
+
+    // Update 4 corners
+    const latBias = (lateralLoad || 0) * 0.04; // Outside tyres heat slightly more in high G corners
+    this.corners.FL.surf = Math.round(this.axles.front.surf - latBias);
+    this.corners.FR.surf = Math.round(this.axles.front.surf + latBias);
+    this.corners.RL.surf = Math.round(this.axles.rear.surf - latBias);
+    this.corners.RR.surf = Math.round(this.axles.rear.surf + latBias);
+    this.corners.FL.carcass = Math.round(this.axles.front.carcass);
+    this.corners.FR.carcass = Math.round(this.axles.front.carcass);
+    this.corners.RL.carcass = Math.round(this.axles.rear.carcass);
+    this.corners.RR.carcass = Math.round(this.axles.rear.carcass);
 
     // Overheating penalties: blistering if pushed too hot for too long
-    if (this.temp > spec.optTempMax + 8) {
+    if (this.surfaceTemp > spec.optTempMax + 6) {
       this.blistering = Math.min(0.40, this.blistering + 0.0035 * dt);
     } else {
       this.blistering = Math.max(0, this.blistering - 0.0005 * dt);
@@ -344,6 +396,10 @@ export class TyreModel {
       thermalFactor,
       wetnessFactor,
       temp: this.temp,
+      surfaceTemp: this.surfaceTemp,
+      carcassTemp: this.carcassTemp,
+      axles: this.axles,
+      corners: this.corners,
       wear: this.wear,
       ageLaps: this.ageLaps,
       isOverheating: this.temp > spec.optTempMax,

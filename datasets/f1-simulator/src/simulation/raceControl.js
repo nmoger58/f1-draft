@@ -74,6 +74,8 @@ export class RaceControl {
     // VSC state
     this.vscEnding = false;
     this.vscTimer = 0;
+    this.vscStartTime = null;
+    this.vscStartTime = null;
 
     // Restart & DRS Management
     this.drsLapsLocked = 0; // DRS locked for 1-2 laps after restart
@@ -125,6 +127,7 @@ export class RaceControl {
     };
     this.vscEnding = false;
     this.vscTimer = 0;
+    this.vscStartTime = null;
     this.drsLapsLocked = 0;
     this.hazardCooldown = 0;
     this.yellowSegments.clear();
@@ -329,8 +332,8 @@ export class RaceControl {
     // 2. Physical Safety Car Dynamics
     this._updateSafetyCar(dt, simTime, L, events);
 
-    // 3. VSC Timer Countdown
-    this._updateVSC(dt, simTime, events);
+    // 3. VSC Timer Countdown, Delta Timing & Automated Penalty Enforcement
+    this._updateVSC(dt, simTime, cars, events);
 
     // 4. Autonomous Incident & Hazard Monitoring (AI Decision Engine)
     this._evaluateAutonomousRaceControl(dt, simTime, cars, incidentManager, weatherState, trackCondition, L, events);
@@ -473,12 +476,60 @@ export class RaceControl {
   }
 
   /**
-   * Update VSC timer countdown.
+   * Update VSC timer countdown, authoritative delta timing ($t_{actual} - t_{reference}$),
+   * and automated 5-second speeding penalty enforcement.
    * @private
    */
-  _updateVSC(dt, simTime, events) {
+  _updateVSC(dt, simTime, cars = [], events) {
     if (this.state === FlagStates.VSC) {
+      if (this.vscStartTime === null || this.vscStartTime === undefined) {
+        this.vscStartTime = simTime;
+        for (const car of cars) {
+          car.vscStartD = car.d;
+          car.vscDelta = 0.0;
+          car._vscSpeedingTimer = 0;
+          car._vscPenaltyApplied = false;
+        }
+      }
+
       this.vscTimer -= dt;
+
+      // Authoritative VSC delta calculation & speeding enforcement
+      const vscElapsedSec = Math.max(0.1, simTime - this.vscStartTime);
+      const vRef = 44.4; // 160 km/h reference speed under VSC
+
+      for (const car of cars) {
+        if (car.vscStartD === undefined) car.vscStartD = car.d;
+        const actualDist = car.d - car.vscStartD;
+        const refDist = vscElapsedSec * vRef;
+        // Delta: positive = compliant/slower than ref, negative = speeding
+        const deltaSec = (refDist - actualDist) / vRef;
+        car.vscDelta = Number(deltaSec.toFixed(2));
+
+        // Speeding enforcement: negative delta by more than 1.0s for >3.0s triggers automated 5-second penalty
+        if (car.vscDelta < -1.0) {
+          car._vscSpeedingTimer = (car._vscSpeedingTimer || 0) + dt;
+          if (car._vscSpeedingTimer > 3.0 && !car._vscPenaltyApplied) {
+            car._vscPenaltyApplied = true;
+            car.penalties = (car.penalties || 0) + 5;
+            const inv = this.openInvestigation(car, 'VSC Speeding (Negative delta violation)', 'vsc_speeding', simTime, 5);
+            this.resolveInvestigation(inv, PenaltyOutcome.TIME_PENALTY_5S, '5-second penalty applied for persistent VSC speeding', 5);
+            events.push({
+              time: simTime,
+              type: 'penalty',
+              category: 'penalty',
+              priority: 1,
+              headline: `5-SECOND TIME PENALTY: ${car.code}`,
+              detail: 'Speeding under Virtual Safety Car conditions (negative delta)',
+              icon: '⏱️',
+              accent: 'red',
+              key: `vsc_pen_${car.code}_${Math.floor(simTime)}`
+            });
+          }
+        } else {
+          car._vscSpeedingTimer = Math.max(0, (car._vscSpeedingTimer || 0) - dt * 2);
+        }
+      }
 
       if (this.vscTimer <= 4.0 && !this.vscEnding) {
         this.vscEnding = true;
@@ -498,7 +549,14 @@ export class RaceControl {
       if (this.vscTimer <= 0) {
         this.state = FlagStates.GREEN;
         this.vscEnding = false;
+        this.vscStartTime = null;
         this.drsLapsLocked = 1;
+        for (const car of cars) {
+          delete car.vscStartD;
+          delete car._vscSpeedingTimer;
+          delete car._vscPenaltyApplied;
+          car.vscDelta = 0.0;
+        }
         events.push({
           time: simTime,
           type: 'flag',

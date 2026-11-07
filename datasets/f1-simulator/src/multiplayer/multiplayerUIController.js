@@ -6,6 +6,7 @@
 import { getSharedMultiplayerClient } from './multiplayerClient.js';
 import { MultiplayerViews } from './multiplayerViews.js';
 import { DRIVERS } from '../data/driverData.js';
+import { ClientSnapshotAdapter } from './clientAdapter.js';
 
 // ── Toast notification helper (non-blocking replacement for alert()) ─────────
 function showToast(message, type = 'error', durationMs = 5000) {
@@ -71,6 +72,7 @@ export class MultiplayerUIController {
     this.mountEl = $('multiplayerMount');
     this.timingTowerMount = null;
     this.client = getSharedMultiplayerClient();
+    this.clientAdapter = new ClientSnapshotAdapter({ interpolationDelayMs: 100, maxBufferSizeMs: 2000 });
     this.active = false;
     this.inRace = false;
     this.currentOutcomes = null;
@@ -160,7 +162,31 @@ export class MultiplayerUIController {
     });
 
     this.client.on('peerTelemetry', (data) => {
+      if (this.clientAdapter && data && data.participantId) {
+        const t = data.telemetry || data;
+        this.clientAdapter.pushSnapshot({
+          sequenceNumber: (this._clientSeq = (this._clientSeq || 0) + 1),
+          serverTimestamp: Date.now(),
+          cars: {
+            [data.participantId]: {
+              id: data.participantId,
+              s: t.s,
+              v: t.v,
+              lat: t.lat,
+              lap: t.lap,
+              heading: t.heading,
+              tyreLife: t.tyreLife
+            }
+          }
+        });
+      }
       this._handlePeerTelemetry(data);
+    });
+
+    this.client.on('roomSnapshot', (snapshot) => {
+      if (this.clientAdapter && snapshot) {
+        this.clientAdapter.pushSnapshot(snapshot);
+      }
     });
 
     // Server aborted the start sequence; room is back in WAITING
@@ -217,6 +243,8 @@ export class MultiplayerUIController {
 
   _resetRaceState() {
     this._clearResultsTimer();
+    this.client.stopPing?.();
+    if (this.clientAdapter) this.clientAdapter.reset();
     const wasRacing = this.inRace;
     this.inRace = false;
     this.currentOutcomes = null;
@@ -537,6 +565,15 @@ export class MultiplayerUIController {
     }
 
     this._mountTimingTower();
+
+    if (this.clientAdapter) {
+      this.clientAdapter.reset();
+      const engine = this._getEngine();
+      if (engine?.track?.length) {
+        this.clientAdapter.circuitLength = engine.track.length;
+      }
+    }
+    this.client.startPing?.(2000);
   }
 
   _mountTimingTower() {
@@ -558,6 +595,43 @@ export class MultiplayerUIController {
       currentLap,
       totalLaps
     });
+  }
+
+  /**
+   * Applies smooth Hermite spline interpolated positions and headings to remote peer cars.
+   * Call once per frame in the main rendering/simulation loop.
+   * @param {Array<object>} cars
+   */
+  applyInterpolatedState(cars) {
+    if (!this.inRace || !Array.isArray(cars) || !this.clientAdapter) return;
+    const interpCars = this.clientAdapter.evaluate();
+    if (!interpCars) return;
+    for (const car of cars) {
+      if (car.isRemotePeer && car.participantId) {
+        const state = interpCars[car.participantId];
+        if (state) {
+          car.d = state.s;
+          car.s = state.s;
+          car.v = state.v;
+          car.lat = state.lat;
+          car.lap = state.lap;
+          if (typeof state.heading === 'number') {
+            car.rot = state.heading;
+          }
+          if (typeof state.tyreLife === 'number' && car.tyreModel) {
+            car.tyreModel.wearPercent = (1 - state.tyreLife) * 100;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns live network diagnostics (RTT, jitter, packet loss %, buffer depth, etc.)
+   * @returns {object|null}
+   */
+  getNetworkDiagnostics() {
+    return this.clientAdapter ? this.clientAdapter.getDiagnostics() : null;
   }
 
   /**

@@ -719,6 +719,74 @@ export class RaceEngine {
     }
   }
 
+  /** Check tyre/brake temperatures, fuel delta, dirty air, and VSC delta for radio messages */
+  _checkThermalAndStrategyEvents(car, newEvents, radioEvents) {
+    if (!this._strategyCooldowns) {
+      this._strategyCooldowns = { tyre: -99, brake: -99, fuel: -99, dirtyAir: -99, vsc: -99 };
+    }
+
+    // 1. Tyre Overheating Alert (> spec.optTempMax + 8 or > 115°C)
+    const tyreMax = car.tyreModel?.spec?.optTempMax || 110;
+    if ((car.tyreSurfaceTemp > tyreMax + 6 || car.tyreTemp > tyreMax + 8) && (this.simTime - this._strategyCooldowns.tyre) > 40) {
+      this._strategyCooldowns.tyre = this.simTime;
+      const radioEv = {
+        time: this.simTime,
+        type: 'TYRE_THERMAL_WARNING',
+        driver: car.code,
+        msg: `Tyre surface temperature critical at ${Math.round(car.tyreSurfaceTemp || car.tyreTemp)}°C! Manage sliding through corners.`
+      };
+      if (radioEvents) radioEvents.push(radioEv);
+    }
+
+    // 2. Brake Thermal Fade Warning (> 950°C)
+    if (car.brakeModel?.isOverheating && (this.simTime - this._strategyCooldowns.brake) > 35) {
+      this._strategyCooldowns.brake = this.simTime;
+      const radioEv = {
+        time: this.simTime,
+        type: 'BRAKE_TEMP_WARNING',
+        driver: car.code,
+        msg: `Brakes reaching critical fade threshold (${car.brakeModel.frontTemp}°C front / ${car.brakeModel.rearTemp}°C rear)! Introduce lift and coast into heavy stops.`
+      };
+      if (radioEvents) radioEvents.push(radioEv);
+    }
+
+    // 3. Fuel Deficit / Lift-and-Coast Prompt
+    if (car.fuelModel?.fuelDeltaKg < -0.25 && (this.simTime - this._strategyCooldowns.fuel) > 45) {
+      this._strategyCooldowns.fuel = this.simTime;
+      const radioEv = {
+        time: this.simTime,
+        type: 'FUEL_TARGET_WARNING',
+        driver: car.code,
+        msg: `Fuel delta is ${car.fuelModel.fuelDeltaKg.toFixed(2)} kg negative. Switch to Lean or lift and coast before turn 1.`
+      };
+      if (radioEvents) radioEvents.push(radioEv);
+    }
+
+    // 4. Dirty Air Warning
+    if (car.aeroState?.inDirtyAir && (this.simTime - this._strategyCooldowns.dirtyAir) > 50) {
+      this._strategyCooldowns.dirtyAir = this.simTime;
+      const radioEv = {
+        time: this.simTime,
+        type: 'AERO_DIRTY_AIR',
+        driver: car.code,
+        msg: `In turbulent wake: losing ${(car.aeroState.downforceMult < 1 ? ((1 - car.aeroState.downforceMult) * 100).toFixed(0) : 0)}% front-end downforce. Step into clean air to preserve front tyres.`
+      };
+      if (radioEvents) radioEvents.push(radioEv);
+    }
+
+    // 5. VSC Delta Warning (< -0.8s)
+    if (this.raceControl.state === 'vsc' && car.vscDelta < -0.8 && (this.simTime - this._strategyCooldowns.vsc) > 10) {
+      this._strategyCooldowns.vsc = this.simTime;
+      const radioEv = {
+        time: this.simTime,
+        type: 'VSC_DELTA_NEGATIVE',
+        driver: car.code,
+        msg: `VSC DELTA NEGATIVE (${car.vscDelta.toFixed(1)}s)! Slow down immediately to avoid a 5-second time penalty!`
+      };
+      if (radioEvents) radioEvents.push(radioEv);
+    }
+  }
+
   // ── Race Control & Incident Triggers ──────────────────────────────────────
 
   deployVSC(duration = 30) {
@@ -1004,6 +1072,10 @@ export class RaceEngine {
         } else {
           this._checkBatteryEvents(car, newEvents, radioEvents);
         }
+      }
+
+      if (isSelected) {
+        this._checkThermalAndStrategyEvents(car, newEvents, radioEvents);
       }
 
       // Strategic AI Evaluation (Weather, Crossover, Undercut/Overcut, SC Opportunity, FIA Rules)
@@ -1702,9 +1774,23 @@ export class RaceEngine {
       compound: car.tyreModel?.compound || 'medium',
       tyreWearPct: Math.round((car.tyreWear || 0) * 100),
       tyreTempC: Math.round(car.tyreTemp || 98),
+      tyreSurfaceTempC: Math.round(car.tyreSurfaceTemp || car.tyreTemp || 98),
+      tyreCarcassTempC: Math.round(car.tyreCarcassTemp || car.tyreTemp || 96),
+      tyreAxles: car.tyreAxles || null,
+      tyreCorners: car.tyreCorners || null,
       brakeTempC: Math.round(car.brakeTemp || 340),
+      frontBrakeTempC: Math.round(car.brakeModel?.frontTemp || car.brakeTemp || 340),
+      rearBrakeTempC: Math.round(car.brakeModel?.rearTemp || car.brakeTemp || 300),
+      brakeEfficiency: car.brakeModel?.efficiency ?? 1.0,
+      brakeFade: car.brakeModel?.fade ?? 0.0,
       effectiveGripMult: Number((car.currentGrip || 1.0).toFixed(3)),
       aquaplaning: !!car.aquaplaning,
+
+      // Fuel & Lift and Coast (MEASURED)
+      fuelKg: Number((car.fuelKg || 0).toFixed(2)),
+      fuelDeltaKg: Number((car.fuelDeltaKg || 0).toFixed(2)),
+      isLiftingAndCoasting: !!car.isLiftingAndCoasting,
+      vscDelta: Number((car.vscDelta || 0).toFixed(2)),
 
       // 8. Aerodynamic Wake & Dirty Air State (MEASURED)
       inDirtyAir: !!car.aeroState?.inDirtyAir,

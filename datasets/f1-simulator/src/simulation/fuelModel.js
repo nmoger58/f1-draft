@@ -33,6 +33,10 @@ export class FuelModel {
 
     this.startingFuelKg = kgEstimate;
     this.fuelRemainingKg = kgEstimate;
+    this.targetFuelPerLap = kgEstimate / this.totalLaps;
+    this.fuelDeltaKg = 0.0; // Positive = surplus (can push), Negative = deficit (saving needed)
+    this.isLiftingAndCoasting = false;
+    this.liftAndCoastDistanceM = 80; // Lift 60-100m before braking zone
     this.mode = EngineModes.STANDARD;
     this.baseMassKg = 798; // 2024-2026 technical regulations
 
@@ -40,6 +44,33 @@ export class FuelModel {
     this.batterySoc = 0.85; // 85% charge at start (0..1)
     this.ersDeploying = false;
     this.ersHarvesting = false;
+  }
+
+  /**
+   * Evaluates if car should lift and coast before upcoming braking zone.
+   * @param {number} distToBrakeZoneM
+   * @param {number} currentLap
+   * @param {number} speedMps
+   * @returns {boolean}
+   */
+  shouldLiftAndCoast(distToBrakeZoneM, currentLap = 1, speedMps = 50) {
+    const targetBurn = this.targetFuelPerLap * currentLap;
+    const actualBurn = this.startingFuelKg - this.fuelRemainingKg;
+    this.fuelDeltaKg = Number((targetBurn - actualBurn).toFixed(2));
+
+    const needsSaving = (this.mode === EngineModes.LEAN) || (this.fuelDeltaKg < -0.15) || (this.isLow);
+    if (!needsSaving || speedMps < 35) {
+      this.isLiftingAndCoasting = false;
+      return false;
+    }
+
+    if (distToBrakeZoneM > 5 && distToBrakeZoneM <= this.liftAndCoastDistanceM) {
+      this.isLiftingAndCoasting = true;
+      return true;
+    }
+
+    this.isLiftingAndCoasting = false;
+    return false;
   }
 
   /** Current vehicle mass in kg (base chassis + driver + remaining fuel) */
@@ -61,13 +92,15 @@ export class FuelModel {
    * @param {number} throttle – 0..1 throttle position
    * @param {number} brake    – 0..1 brake position
    * @param {number} speedMps – vehicle speed
-   * @returns {object} { fuelKg, massKg, isOut, isLow, ersBoost }
+   * @param {boolean} [isLifting=false] - whether lift and coast is currently active
+   * @returns {object} { fuelKg, massKg, isOut, isLow, ersBoost, isLiftingAndCoasting, fuelDeltaKg }
    */
-  update(dt, throttle, brake, speedMps) {
+  update(dt, throttle, brake, speedMps, isLifting = false) {
     // 1. Fuel burn rate (max flow limit = 100 kg/hr = 0.0277 kg/s at WOT)
+    const effectiveThrottle = isLifting ? 0 : throttle;
     const idleFlow = 0.0006; // kg/s
     const maxFlow  = 0.0277; // kg/s at 100% throttle
-    const burnRate = (idleFlow + throttle * (maxFlow - idleFlow)) * this.mode.flowMult;
+    const burnRate = (idleFlow + effectiveThrottle * (maxFlow - idleFlow)) * this.mode.flowMult;
 
     if (this.fuelRemainingKg > 0) {
       this.fuelRemainingKg = Math.max(0, this.fuelRemainingKg - burnRate * dt);
@@ -75,7 +108,7 @@ export class FuelModel {
 
     // 2. ERS Simulation (MGU-K)
     // Deploy under heavy throttle (>80%) at speed > 30 m/s if battery has charge
-    if (throttle > 0.80 && speedMps > 30 && this.batterySoc > 0.05) {
+    if (effectiveThrottle > 0.80 && speedMps > 30 && this.batterySoc > 0.05) {
       this.ersDeploying = true;
       this.ersHarvesting = false;
       this.batterySoc = Math.max(0, this.batterySoc - 0.015 * dt); // ~4 MJ per lap max deploy
@@ -98,6 +131,8 @@ export class FuelModel {
       massPaceFactor: this.massPaceFactor,
       isOut,
       isLow,
+      isLiftingAndCoasting: this.isLiftingAndCoasting,
+      fuelDeltaKg: this.fuelDeltaKg,
       ersBoost: this.ersDeploying ? 1.04 : 1.0,
       batterySoc: this.batterySoc
     };

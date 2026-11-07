@@ -85,11 +85,20 @@ function _fixedStep(car, track, dt, targetLat, paceFactor, ramp, trackWetness, t
       car.acc || 0,
       trackWetness,
       trackTemp,
-      car.driver?.personality?.tyreManagement ?? 0.75
+      car.driver?.personality?.tyreManagement ?? 0.75,
+      {
+        isWheelspinning: !!car.isWheelspinning,
+        inDirtyAir: !!car.aeroState?.inDirtyAir,
+        brake: car.brake || 0
+      }
     );
     gripFactor = gripEval.totalGrip * (localTrackGrip || 1.0);
     car.tyreWear = gripEval.wear;
     car.tyreTemp = gripEval.temp;
+    car.tyreSurfaceTemp = gripEval.surfaceTemp ?? gripEval.temp;
+    car.tyreCarcassTemp = gripEval.carcassTemp ?? gripEval.temp;
+    car.tyreAxles = gripEval.axles;
+    car.tyreCorners = gripEval.corners;
     car.aquaplaning = gripEval.aquaplaning;
     car.currentGrip = gripFactor;
   }
@@ -117,8 +126,9 @@ function _fixedStep(car, track, dt, targetLat, paceFactor, ramp, trackWetness, t
   }
 
   // 5. Speed Planning & Kinematic Braking Zones
-  // Corner speed limit is physically governed by tyre grip and aerodynamic downforce
-  const effectiveGrip = Math.max(0.20, gripFactor * setupMechGrip * Math.sqrt(downforceMult));
+  // Corner speed limit is physically governed by tyre grip, front-end dirty air loss, and aerodynamic downforce
+  const frontGripLoss = car.aeroState?.frontGripLoss ?? 0.0;
+  const effectiveGrip = Math.max(0.20, (gripFactor - frontGripLoss) * setupMechGrip * Math.sqrt(downforceMult));
   const gripSpeedScale = Math.sqrt(effectiveGrip);
 
   const massFactor = car.fuelModel ? (798 / car.fuelModel.massKg) : 1.0;
@@ -127,6 +137,15 @@ function _fixedStep(car, track, dt, targetLat, paceFactor, ramp, trackWetness, t
   // Look-ahead distance required to brake safely to upcoming corners
   const lookM = Math.max(30, (car.v * car.v) / (2 * Math.max(10, aBrakeCap * 0.85)) + 15);
   const safeKinematicV = maxSafeSpeedAhead(track, car.d, lookM, aBrakeCap * 0.86, gripSpeedScale);
+
+  // Lift-and-coast fuel saving evaluation ahead of upcoming braking zones
+  const isApproachingBrakingZone = safeKinematicV < car.v - 6.0;
+  if (isApproachingBrakingZone && car.fuelModel) {
+    car.fuelModel.shouldLiftAndCoast(lookM * 0.5, car.lap || 1, car.v);
+  } else if (car.fuelModel) {
+    car.fuelModel.isLiftingAndCoasting = false;
+  }
+  car.isLiftingAndCoasting = car.fuelModel?.isLiftingAndCoasting || false;
 
   const { v: targetV } = sampleTrack(track, car.d);
 
@@ -179,6 +198,13 @@ function _fixedStep(car, track, dt, targetLat, paceFactor, ramp, trackWetness, t
     car.throttle = 0;
     car.brake = 1;
     acc = 0;
+    car.wheelspin = 0;
+    car.isWheelspinning = false;
+  } else if (car.isLiftingAndCoasting && car.v > 35) {
+    // Lift and Coast: lift throttle before braking zone to save fuel with minimal lap time penalty
+    acc = -Math.max(1.5, dragCoeff * car.v * 0.6);
+    car.throttle = 0;
+    car.brake = 0;
     car.wheelspin = 0;
     car.isWheelspinning = false;
   } else if (car.v < desiredV) {

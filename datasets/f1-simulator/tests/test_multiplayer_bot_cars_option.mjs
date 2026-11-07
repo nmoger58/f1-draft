@@ -195,6 +195,7 @@ async function run() {
   console.log('\n══════════════════════════════════════════════════════════════');
   console.log('🎉 ALL MULTIPLAYER BOT CARS TESTS PASSED (100% GREEN)       ');
   console.log('══════════════════════════════════════════════════════════════\n');
+  process.exit(0);
 }
 
 run().catch(err => {

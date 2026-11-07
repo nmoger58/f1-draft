@@ -27,6 +27,7 @@ assert.equal(driverList.length, 20, 'Grid must contain 20 drivers');
 
 const engine = new RaceEngine();
 engine.build(track, driverList, 5, {
+  warp: 1,
   weatherPreset: 'DRY',
   safetyCarEnabled: true,
   vscEnabled: true,

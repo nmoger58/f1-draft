@@ -26,6 +26,7 @@
 
 import { sampleTrack } from '../simulation/trackManager.js';
 import { SimConfig } from '../config/simulationConfig.js';
+import { getSharedMultiplayerController } from '../multiplayer/multiplayerUIController.js';
 
 const STORAGE_KEY_DEBUG_LAYERS = 'f1_dev_debug_layers';
 
@@ -553,8 +554,16 @@ export class DeveloperTelemetryManager {
         </div>
         <div class="dev-metrics-list">
           <div class="dev-metric">
-            <span class="dev-lbl">Tyre Wear & Core Temp: <span class="badge-meas">MEASURED</span></span>
-            <span class="dev-val tel-mono">${d.tyreWearPct}% wear · ${d.tyreTempC}°C tyres · ${d.brakeTempC}°C brakes</span>
+            <span class="dev-lbl">Tyre Wear & Dual-Axle Temp: <span class="badge-meas">MEASURED</span></span>
+            <span class="dev-val tel-mono">${d.tyreWearPct}% wear · ${d.tyreSurfaceTempC || d.tyreTempC}°C surf / ${d.tyreCarcassTempC || d.tyreTempC}°C carcass</span>
+          </div>
+          <div class="dev-metric">
+            <span class="dev-lbl">Carbon Brakes & Disc Fade: <span class="badge-meas">MEASURED</span></span>
+            <span class="dev-val tel-mono ${d.brakeFade > 0.05 ? 'tel-val-warn' : 'tel-val-ok'}">${d.frontBrakeTempC || d.brakeTempC}°C F / ${d.rearBrakeTempC || d.brakeTempC}°C R ${d.brakeFade > 0.05 ? `· ⚠️ FADE ${(d.brakeFade * 100).toFixed(0)}%` : '· OPTIMAL BITE'}</span>
+          </div>
+          <div class="dev-metric">
+            <span class="dev-lbl">Fuel Mass & Lift-and-Coast: <span class="badge-meas">MEASURED</span></span>
+            <span class="dev-val tel-mono ${d.isLiftingAndCoasting ? 'tel-val-ok' : ''}">${d.fuelKg ?? '—'} kg (Δ ${d.fuelDeltaKg > 0 ? '+' : ''}${d.fuelDeltaKg ?? 0} kg) · ${d.isLiftingAndCoasting ? '🟢 LIFT & COAST' : 'STANDARD BURN'}</span>
           </div>
           <div class="dev-metric">
             <span class="dev-lbl">Effective Grip Multiplier: <span class="badge-meas">MEASURED</span></span>
@@ -612,6 +621,54 @@ export class DeveloperTelemetryManager {
           </div>
         </div>
       </div>
+
+      <!-- Card 7: Network Synchronisation & Authoritative Telemetry -->
+      ${(() => {
+        const mpCtrl = getSharedMultiplayerController();
+        const netDiag = mpCtrl?.getNetworkDiagnostics();
+        const inMp = mpCtrl?.inRace;
+        return `
+        <div class="dev-card" style="grid-column: span 2;">
+          <div class="dev-card-head">
+            <span>📡 NETWORK SYNCHRONISATION & AUTHORITATIVE TIMING</span>
+            <span class="dev-tag">${inMp ? (netDiag?.reconnectionStatus === 'connected' ? 'SYNCED' : 'RECONNECTING') : 'LOCAL / STANDALONE'}</span>
+          </div>
+          <div class="dev-metrics-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;">
+            <div class="dev-metric">
+              <span class="dev-lbl">Round Trip Time (Ping): <span class="badge-meas">MEASURED</span></span>
+              <span class="dev-val tel-mono ${netDiag && netDiag.pingMs > 150 ? 'tel-val-warn' : 'tel-val-ok'}">${netDiag ? netDiag.pingMs.toFixed(1) + ' ms' : '0.0 ms'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Network Jitter: <span class="badge-meas">MEASURED</span></span>
+              <span class="dev-val tel-mono">${netDiag ? netDiag.jitterMs.toFixed(1) + ' ms' : '0.0 ms'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Authoritative Snapshot Buffer: <span class="badge-meas">BUFFER</span></span>
+              <span class="dev-val tel-mono">${netDiag ? netDiag.snapshotBufferDepth + ' snapshots (' + netDiag.bufferDurationMs.toFixed(0) + ' ms)' : '0 snapshots'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Interpolation Delay: <span class="badge-est">CONFIGURED</span></span>
+              <span class="dev-val tel-mono">${netDiag ? netDiag.interpolationDelayMs + ' ms' : '100 ms'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Dead Reckoning Active: <span class="badge-est">PREDICTION</span></span>
+              <span class="dev-val tel-mono ${netDiag && netDiag.deadReckoningActive ? 'tel-val-warn' : 'tel-val-ok'}">${netDiag && netDiag.deadReckoningActive ? 'ACTIVE (' + netDiag.deadReckoningDurationMs.toFixed(0) + ' ms)' : 'INACTIVE (Hermite Synced)'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Hermite Spline Correction RMS: <span class="badge-est">RECONCILE</span></span>
+              <span class="dev-val tel-mono">${netDiag ? netDiag.correctionMagnitudeM.toFixed(3) + ' m' : '0.000 m'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Packet Loss Rate: <span class="badge-meas">MEASURED</span></span>
+              <span class="dev-val tel-mono ${netDiag && netDiag.packetLossRate > 5 ? 'tel-val-warn' : 'tel-val-ok'}">${netDiag ? netDiag.packetLossRate.toFixed(1) + '%' : '0.0%'}</span>
+            </div>
+            <div class="dev-metric">
+              <span class="dev-lbl">Server Monotonic Tick: <span class="badge-meas">AUTHORITATIVE</span></span>
+              <span class="dev-val tel-mono">#${netDiag ? netDiag.lastServerTick : 0} (Seq #${netDiag ? netDiag.lastSequenceNumber : 0})</span>
+            </div>
+          </div>
+        </div>`;
+      })()}
     `;
   }
 

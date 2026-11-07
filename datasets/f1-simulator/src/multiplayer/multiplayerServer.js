@@ -171,7 +171,7 @@ export class MultiplayerServerManager {
           ? !!options.aiParticipation.fillToMax
           : (options.aiParticipation?.enabled !== undefined ? !!options.aiParticipation.enabled : true)
       },
-      reconnectGraceMs: 60000,
+      reconnectGraceMs: options.reconnectGraceMs || 60000,
       state: RoomStates.WAITING,
       phase: 'waiting_for_players',
       createdAt: Date.now(),
@@ -250,13 +250,31 @@ export class MultiplayerServerManager {
           clearTimeout(existing._disconnectTimer);
           existing._disconnectTimer = null;
         }
+
+        // Restore active racing state if race is currently underway
+        if (room.raceSession && room.raceSession.cars[existingParticipantId]) {
+          const car = room.raceSession.cars[existingParticipantId];
+          if (!car.finished && car.status !== ParticipantRaceStatus.DNF) {
+            car.status = ParticipantRaceStatus.RACING;
+            existing.raceStatus = ParticipantRaceStatus.RACING;
+          }
+        }
+
         this.broadcastRoomUpdate(room);
+        this.broadcast(room, {
+          type: 'PARTICIPANT_RECONNECTED',
+          roomId: room.roomId,
+          participantId: existingParticipantId,
+          displayName: existing.displayName
+        });
+
         return {
           success: true,
           reconnected: true,
           room: this.serializeRoom(room),
           participant: this.serializeParticipant(existing),
-          sessionToken: existing.sessionToken
+          sessionToken: existing.sessionToken,
+          raceSession: room.raceSession ? this.serializeRaceSession(room) : null
         };
       }
     }
@@ -663,6 +681,11 @@ export class MultiplayerServerManager {
         room.phase = 'racing';
         room.raceSession.startTime = Date.now();
 
+        if (!room._snapshotInterval) {
+          room._snapshotInterval = setInterval(() => this.broadcastRoomSnapshot(room), 50);
+          if (room._snapshotInterval.unref) room._snapshotInterval.unref();
+        }
+
         this.broadcast(room, {
           type: 'RACE_START_LIGHTS_OUT',
           startTime: room.raceSession.startTime
@@ -868,8 +891,62 @@ export class MultiplayerServerManager {
       finishedCount: 0,
       finalClassification: null,
       completed: false,
-      completionEvaluated: false
+      completionEvaluated: false,
+      sequenceNumber: 0,
+      simulationTick: 0
     };
+  }
+
+  /**
+   * Serializes active race session safely for network transmission and client hydration.
+   * @param {object} room
+   */
+  serializeRaceSession(room) {
+    if (!room || !room.raceSession) return null;
+    const s = room.raceSession;
+    return {
+      sessionId: s.sessionId,
+      raceId: s.sessionId,
+      circuitId: s.circuitId,
+      circuitName: s.circuitName,
+      totalLaps: s.totalLaps,
+      simSpeed: s.simSpeed || 2,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      cars: s.cars,
+      totalParticipants: s.totalParticipants,
+      finishedCount: s.finishedCount,
+      completed: s.completed,
+      finalClassification: s.finalClassification,
+      sequenceNumber: s.sequenceNumber || 0,
+      simulationTick: s.simulationTick || 0
+    };
+  }
+
+  /**
+   * Broadcast an authoritative timestamped snapshot to all room participants.
+   * @param {object} room
+   */
+  broadcastRoomSnapshot(room) {
+    if (!room || !room.raceSession || room.state !== RoomStates.RACING) return;
+    const session = room.raceSession;
+    session.sequenceNumber = (session.sequenceNumber || 0) + 1;
+    session.simulationTick = (session.simulationTick || 0) + 1;
+
+    const snapshot = {
+      type: 'ROOM_SNAPSHOT',
+      roomId: room.roomId,
+      raceId: session.sessionId,
+      sequenceNumber: session.sequenceNumber,
+      serverTimestamp: Date.now(),
+      simulationTick: session.simulationTick,
+      cars: session.cars,
+      flags: room.flags || 'green',
+      vsc: room.vsc || null,
+      safetyCar: room.safetyCar || null
+    };
+
+    this.broadcast(room, snapshot);
   }
 
   /**
@@ -941,6 +1018,7 @@ export class MultiplayerServerManager {
           this.evaluateGlobalRaceCompletion(room);
         }
       }, 60000);
+      if (room._finishWatchdogTimer.unref) room._finishWatchdogTimer.unref();
     }
 
     // Broadcast individual finish notification to all room clients
@@ -1026,10 +1104,14 @@ export class MultiplayerServerManager {
     const allTerminal = allCars.every(c => terminalStates.includes(c.status) || c.finished);
     if (!allTerminal) return;
 
-    // Clear watchdog timer
+    // Clear watchdog timer and snapshot broadcast interval
     if (room._finishWatchdogTimer) {
       clearTimeout(room._finishWatchdogTimer);
       room._finishWatchdogTimer = null;
+    }
+    if (room._snapshotInterval) {
+      clearInterval(room._snapshotInterval);
+      room._snapshotInterval = null;
     }
 
     session.completionEvaluated = true;
@@ -1152,6 +1234,7 @@ export class MultiplayerServerManager {
     room._returnToLobbyTimer = setTimeout(() => {
       this.returnRoomToWaitingRoom(room.roomId);
     }, RESULTS_DURATION_MS);
+    if (room._returnToLobbyTimer.unref) room._returnToLobbyTimer.unref();
   }
 
   // ── Automatic Return to Waiting Room & Rematch ──────────────────────────────
@@ -1179,6 +1262,10 @@ export class MultiplayerServerManager {
     if (room._finishWatchdogTimer) {
       clearTimeout(room._finishWatchdogTimer);
       room._finishWatchdogTimer = null;
+    }
+    if (room._snapshotInterval) {
+      clearInterval(room._snapshotInterval);
+      room._snapshotInterval = null;
     }
 
     room.state = RoomStates.RETURNING_TO_LOBBY;
@@ -1262,21 +1349,19 @@ export class MultiplayerServerManager {
     participant.connectionStatus = 'disconnected';
     participant.socket = null;
 
-    // If a player disconnects during the race, mark their status as disconnected_classified
-    // and re-evaluate global race completion so the remaining racers are never blocked
+    // Track disconnection on active car without instantly aborting their race position
     if (room.state === RoomStates.RACING && room.raceSession) {
       const car = room.raceSession.cars[participant.participantId];
       if (car && !car.finished) {
-        car.status = ParticipantRaceStatus.DISCONNECTED_CLASSIFIED;
-        participant.raceStatus = ParticipantRaceStatus.DISCONNECTED_CLASSIFIED;
-        this.evaluateGlobalRaceCompletion(room);
+        car.disconnected = true;
       }
     }
 
-    // Start reconnection grace period timer
+    // Start reconnection grace period timer (60s default)
     participant._disconnectTimer = setTimeout(() => {
       this.expireParticipantSession(room, participant);
-    }, room.reconnectGraceMs);
+    }, room.reconnectGraceMs || 60000);
+    if (participant._disconnectTimer.unref) participant._disconnectTimer.unref();
 
     this.broadcastRoomUpdate(room);
   }

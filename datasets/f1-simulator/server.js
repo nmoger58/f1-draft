@@ -208,6 +208,15 @@ wss.on('connection', (ws) => {
           break;
         }
 
+        case 'PING': {
+          ws.send(JSON.stringify({
+            type: 'PONG',
+            clientTimestamp: data.clientTimestamp,
+            serverTimestamp: Date.now()
+          }));
+          break;
+        }
+
         case 'RACE_TELEMETRY': {
           const roomId = mpServer.participantToRoom.get(data.participantId);
           if (roomId) {
@@ -216,19 +225,22 @@ wss.on('connection', (ws) => {
               // Update server session state
               if (room.raceSession && room.raceSession.cars[data.participantId]) {
                 const c = room.raceSession.cars[data.participantId];
-                c.s = data.s;
-                c.v = data.v;
-                c.lat = data.lat;
-                c.lap = data.lap;
-                c.tyreLife = data.tyreLife;
-                c.batteryLevel = data.batteryLevel;
-                c.drsActive = data.drsActive;
+                if (typeof data.s === 'number') c.s = data.s;
+                if (typeof data.v === 'number') c.v = data.v;
+                if (typeof data.lat === 'number') c.lat = data.lat;
+                if (typeof data.heading === 'number') c.heading = data.heading;
+                if (typeof data.lap === 'number') c.lap = data.lap;
+                if (typeof data.tyreLife === 'number') c.tyreLife = data.tyreLife;
+                if (typeof data.batteryLevel === 'number') c.batteryLevel = data.batteryLevel;
+                if (typeof data.drsActive === 'boolean') c.drsActive = data.drsActive;
+                if (typeof data.vscDelta === 'number') c.vscDelta = data.vscDelta;
               }
               // Broadcast telemetry update to peers
               mpServer.broadcast(room, {
                 type: 'PEER_TELEMETRY',
                 participantId: data.participantId,
-                telemetry: data
+                telemetry: data,
+                serverTimestamp: Date.now()
               });
             }
           }

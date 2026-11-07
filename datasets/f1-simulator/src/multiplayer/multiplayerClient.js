@@ -277,6 +277,22 @@ export class MultiplayerClient {
         this.emit('rematchAccepted', data.room);
         break;
 
+      case 'ROOM_SNAPSHOT':
+        this.emit('roomSnapshot', data);
+        break;
+
+      case 'PONG':
+        if (data.clientTimestamp) {
+          const rtt = Math.max(1, Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - data.clientTimestamp));
+          this.rtt = rtt;
+          this.emit('ping', rtt);
+        }
+        break;
+
+      case 'PARTICIPANT_RECONNECTED':
+        this.emit('participantReconnected', data);
+        break;
+
       case 'PEER_TELEMETRY':
         this.emit('peerTelemetry', data);
         break;
@@ -439,6 +455,29 @@ export class MultiplayerClient {
         ...telemetry
       }));
     } catch (_) {}
+  }
+
+  sendPing() {
+    if (!this.connected || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    try {
+      this.ws.send(JSON.stringify({
+        type: 'PING',
+        clientTimestamp: (typeof performance !== 'undefined' ? performance.now() : Date.now())
+      }));
+    } catch (_) {}
+  }
+
+  startPing(intervalMs = 2000) {
+    this.stopPing();
+    this.sendPing();
+    this._pingInterval = setInterval(() => this.sendPing(), Math.max(500, intervalMs));
+  }
+
+  stopPing() {
+    if (this._pingInterval) {
+      clearInterval(this._pingInterval);
+      this._pingInterval = null;
+    }
   }
 
   async finishRace(finishTime, bestLap) {

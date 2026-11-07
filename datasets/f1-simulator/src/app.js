@@ -312,6 +312,9 @@ function frame(ts) {
 
       // Live Multiplayer Timing Tower & Telemetry Sync
       if (multiplayerCtrl && multiplayerCtrl.inRace) {
+        // Apply smooth Hermite spline interpolated positions/headings to remote peer cars
+        multiplayerCtrl.applyInterpolatedState(engine.cars);
+
         const myCar = engine.cars[state.selIdx];
         multiplayerCtrl.updateLiveTiming(engine.cars, myCar?.lap || 1, engine.totalLaps || 5);
         if (myCar) {
@@ -320,6 +323,8 @@ function frame(ts) {
             v: myCar.v,
             lat: myCar.lat,
             lap: myCar.lap,
+            heading: myCar.rot || 0,
+            vscDelta: myCar.vscDelta || 0,
             tyreLife: myCar.tyreModel?.wearPercent !== undefined ? 1 - myCar.tyreModel.wearPercent / 100 : 1,
             batteryLevel: myCar.batteryLevel || 100,
             drsActive: myCar.drsActive || false
