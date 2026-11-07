@@ -140,8 +140,16 @@
                 </div>
             </div>
 
-            <!-- Header Status -->
-            <div v-if="phase === 'sim'" class="flex items-center space-x-2 sm:space-x-4 text-xs font-mono">
+            <!-- Header Actions & Simulator Bridge -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <a href="/simulator/" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider px-2.5 sm:px-3 py-1.5 rounded-lg border border-red-500/50 shadow-md shadow-red-900/30 flex items-center space-x-1.5 transition active:scale-95 select-none" title="Open Full 3D Autonomous Racing & Multiplayer Arena">
+                    <span>🏎️</span>
+                    <span class="hidden md:inline">3D Race Simulator</span>
+                    <span class="md:hidden">3D Sim</span>
+                </a>
+
+                <!-- Header Status -->
+                <div v-if="phase === 'sim'" class="flex items-center space-x-2 sm:space-x-4 text-xs font-mono">
                 <div class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300">
                     <span class="text-slate-500 mr-1 text-[10px]">R</span>
                     <b class="text-white text-xs sm:text-sm">{{ currentRound }}</b><span class="text-slate-500 text-[10px]">/{{ totalRaces }}</span>
@@ -164,6 +172,7 @@
             </div>
             <div v-else class="text-[11px] text-slate-400 font-mono uppercase bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
                 <span class="text-red-400 font-bold">{{ phase.toUpperCase() }}</span>
+            </div>
             </div>
         </header>
 

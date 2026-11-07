@@ -1,0 +1,350 @@
+/* ==========================================================================
+   championship-responsive.css
+   Load AFTER your existing championship / f1-* stylesheet.
+   Covers: main menu, entry, wizard, hub, stage cards (overview, practice,
+   qualifying, grid, race prep), results, finale, standings + calendar modals.
+   ========================================================================== */
+
+:root {
+  --f1-gutter: clamp(12px, 3.5vw, 32px);
+  --f1-safe-top: env(safe-area-inset-top, 0px);
+  --f1-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --f1-border: rgba(255, 255, 255, 0.1);
+  --f1-panel: rgba(16, 17, 24, 0.96);
+  --f1-muted: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Backdrop: scrollable on small screens, never clipped ──────────────── */
+.f1-modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: calc(var(--f1-safe-top) + var(--f1-gutter)) var(--f1-gutter) calc(var(--f1-safe-bottom) + var(--f1-gutter));
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+@media (min-height: 760px) and (min-width: 900px) {
+  .f1-modal-backdrop { align-items: center; }
+}
+
+.f1-menu-card:not([class*="qr-"]), .f1-wizard-card:not([class*="qr-"]), .f1-stage-card:not([class*="qr-"]), .f1-finale-card {
+  width: 100%; max-width: 920px; min-width: 0;
+  margin: 0 auto;
+  max-height: none;               /* let the backdrop scroll, not the card */
+  box-sizing: border-box;
+}
+.f1-stage-card.f1-card-wide:not([class*="qr-"]), .f1-card-wide:not([class*="qr-"]) { max-width: 1100px; }
+.f1-wizard-card:not([class*="qr-"]) { max-width: 980px; }
+
+.f1-menu-card *, .f1-wizard-card *, .f1-stage-card *, .f1-finale-card *,
+.f1-hub-screen * { box-sizing: border-box; }
+
+/* Typography scales down */
+.f1-menu-title, .f1-finale-title { font-size: clamp(1.8rem, 8vw, 3.25rem); line-height: 1.05; overflow-wrap: anywhere; }
+.f1-stage-header h1, .f1-hub-title-block h1 { font-size: clamp(1.25rem, 5.2vw, 2rem); line-height: 1.15; overflow-wrap: anywhere; }
+.f1-wizard-body h2, .f1-empty-champ h2, .f1-active-champ-hero h2 { font-size: clamp(1.15rem, 4.6vw, 1.6rem); line-height: 1.2; }
+.f1-loc-tag, .f1-sub { font-size: clamp(12px, 3.3vw, 14px); line-height: 1.5; }
+
+/* Touch targets + iOS no-zoom inputs */
+.f1-btn-primary, .f1-btn-secondary, .f1-btn-ghost, .f1-btn-select-driver,
+.f1-tab-btn, .f1-chip, .compound-pill { min-height: 44px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.f1-btn-tiny { min-height: 36px; }
+.f1-input, .f1-select { width: 100%; min-height: 48px; font-size: 16px; }
+
+/* Nav row inside cards */
+.f1-menu-nav, .f1-stage-nav, .f1-wizard-nav {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px;
+}
+
+/* ── 1. Main menu / entry ──────────────────────────────────────────────── */
+.f1-mode-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.f1-mode-btn { display: flex; align-items: flex-start; gap: 14px; text-align: left; width: 100%; min-width: 0; }
+.f1-mode-icon { flex: 0 0 auto; font-size: clamp(28px, 8vw, 40px); }
+.f1-mode-info { min-width: 0; }
+.f1-mode-info h2 { font-size: clamp(1rem, 4vw, 1.3rem); margin: 0 0 6px; }
+.f1-mode-info p { font-size: 13.5px; line-height: 1.5; margin: 0 0 10px; }
+
+.f1-active-meta { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.f1-entry-actions-row { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 560px) {
+  .f1-entry-actions-row > button, .f1-hero-actions > button { width: 100%; }
+  .f1-btn-lg, .f1-btn-hero { width: 100%; }
+}
+
+/* ── 3. Wizard ─────────────────────────────────────────────────────────── */
+.f1-wizard-header { position: sticky; top: calc(-1 * var(--f1-gutter)); z-index: 5; padding-bottom: 8px; background: var(--f1-panel); }
+.f1-wizard-progress { height: 6px; border-radius: 6px; overflow: hidden; background: rgba(255,255,255,.1); }
+.f1-wizard-bar { height: 100%; transition: width .3s ease; }
+
+.f1-grid-2col { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.f1-form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.f1-form-group label { font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+.f1-select option { white-space: normal; }
+
+.f1-checkbox-list { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.f1-checkbox-card { display: flex; align-items: flex-start; gap: 12px; min-height: 56px; padding: 12px; min-width: 0; cursor: pointer; }
+.f1-checkbox-card input[type="checkbox"] { flex: 0 0 auto; width: 22px; height: 22px; margin-top: 2px; }
+.f1-check-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.f1-check-info strong { font-size: 14px; }
+.f1-check-info span { font-size: 12.5px; line-height: 1.45; color: var(--f1-muted); }
+
+/* Chip rows: long lists (teams, managers, cars) scroll sideways on phones */
+.f1-team-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.f1-chip { display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; white-space: nowrap; }
+
+.f1-driver-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); margin-top: 12px; }
+.f1-driver-card { min-width: 0; }
+.f1-driver-card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-left: 10px; }
+.f1-driver-name { font-weight: 700; overflow-wrap: anywhere; }
+.f1-rating-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+.f1-btn-select-driver { width: 100%; }
+.draft-synergy-panel { overflow-wrap: anywhere; }
+
+.f1-summary-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.f1-summary-box { min-width: 0; overflow-wrap: anywhere; }
+.f1-summary-box h3 { font-size: clamp(1rem, 4vw, 1.15rem); }
+
+.f1-cal-list { display: flex; flex-direction: column; gap: 8px; }
+.f1-cal-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; }
+.f1-cal-details { display: flex; flex-direction: column; min-width: 0; }
+.f1-cal-details small { overflow-wrap: anywhere; }
+.f1-cal-rec { font-size: 12px; text-align: right; }
+
+.f1-wizard-footer {
+  position: sticky; bottom: calc(-1 * var(--f1-gutter) - var(--f1-safe-bottom));
+  z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 0 calc(8px + var(--f1-safe-bottom)); background: var(--f1-panel);
+  border-top: 1px solid var(--f1-border);
+}
+.f1-wizard-controls { display: flex; gap: 10px; }
+
+@media (max-width: 700px) {
+  .f1-grid-2col, .f1-checkbox-list { grid-template-columns: minmax(0, 1fr); }
+  .f1-wizard-footer { flex-direction: column-reverse; align-items: stretch; }
+  .f1-wizard-controls { flex-direction: row; }
+  .f1-wizard-controls > button { flex: 1 1 0; }
+  .f1-wizard-footer > .f1-btn-ghost { width: 100%; }
+
+  /* Horizontal swipe rows for chip lists */
+  .f1-team-chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; margin-inline: calc(-1 * var(--f1-gutter)); padding-inline: var(--f1-gutter);
+    scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .f1-team-chips::-webkit-scrollbar { display: none; }
+  .f1-chip { flex: 0 0 auto; scroll-snap-align: start; }
+
+  .f1-cal-item { grid-template-columns: auto minmax(0, 1fr); }
+  .f1-cal-rec { grid-column: 2; text-align: left; }
+}
+
+/* ── 4. Hub ────────────────────────────────────────────────────────────── */
+.f1-hub-screen {
+  width: 100%; max-width: 1200px; margin: 0 auto;
+  padding: calc(var(--f1-safe-top) + var(--f1-gutter)) var(--f1-gutter) calc(var(--f1-safe-bottom) + var(--f1-gutter));
+  display: flex; flex-direction: column; gap: 16px;
+}
+.f1-hub-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; }
+.f1-hub-badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.f1-hub-progress-block { flex: 1 1 240px; max-width: 360px; min-width: 0; }
+.f1-hub-prog-labels { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.f1-prog-track { height: 8px; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,.1); }
+.f1-prog-track > i { display: block; height: 100%; }
+
+.f1-hub-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; }
+.f1-hub-event-card, .f1-hub-standings-card { min-width: 0; }
+.f1-event-title { font-size: clamp(1.4rem, 6vw, 2.2rem); line-height: 1.1; overflow-wrap: anywhere; }
+.f1-event-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
+.f1-hero-action-box { margin: 16px 0; }
+.f1-btn-hero { width: 100%; min-height: 56px; padding: 12px 18px; font-size: clamp(13px, 3.6vw, 16px); line-height: 1.25; text-wrap: balance; }
+
+.f1-weekend-timeline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.f1-tl-step { padding: 8px 2px; text-align: center; font-size: clamp(9px, 2.6vw, 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.f1-hub-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.f1-hub-card-head h3 { font-size: clamp(.85rem, 3.4vw, 1rem); margin: 0; }
+
+.f1-mt-head, .f1-mt-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) minmax(0, .9fr) 44px; align-items: center; gap: 8px; font-size: 13px; }
+.f1-mt-row { padding: 8px 6px; min-height: 40px; }
+.f1-name-tag { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f1-team-tag { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--f1-muted); }
+.f1-pts-tag { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.f1-col-dot { flex: 0 0 auto; display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+
+.f1-hub-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.f1-hub-foot-left, .f1-hub-foot-right { display: flex; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 860px) {
+  .f1-hub-grid { grid-template-columns: minmax(0, 1fr); }
+  .f1-hub-progress-block { max-width: none; flex-basis: 100%; }
+}
+@media (max-width: 560px) {
+  .f1-mt-head, .f1-mt-row { grid-template-columns: 24px minmax(0, 1fr) 40px; }
+  .f1-mt-head > span:nth-child(3), .f1-mt-row > .f1-team-tag { display: none; }
+  .f1-hub-footer, .f1-hub-foot-left, .f1-hub-foot-right { flex-direction: column; align-items: stretch; width: 100%; }
+  .f1-hub-footer button { width: 100%; }
+}
+
+/* ── 5, 6, 9. Stage cards: overview / practice / race prep ─────────────── */
+.f1-stage-grid, .f1-prep-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.f1-circuit-notes, .f1-weekend-schedule-box, .f1-briefing-box, .f1-strat-choice-box { min-width: 0; }
+.f1-stat-pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.f1-stat-pill { font-size: 12px; padding: 6px 10px; }
+.f1-sched-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.f1-sched-list li { display: flex; flex-direction: column; gap: 2px; }
+
+.f1-psych-banner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.f1-psych-badge-stat { white-space: nowrap; font-weight: 800; font-size: 12px; }
+
+.f1-practice-box { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.f1-practice-metric { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.f1-brief-checks { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.f1-tyre-pills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.compound-pill { padding: 0 6px; font-size: 13px; }
+
+.f1-stage-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.f1-stage-actions-split { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
+
+@media (max-width: 760px) {
+  .f1-stage-grid, .f1-prep-grid { grid-template-columns: minmax(0, 1fr); }
+  .f1-psych-banner { grid-template-columns: auto minmax(0, 1fr); }
+  .f1-psych-badge-stat { grid-column: 1 / -1; }
+  .f1-stage-actions, .f1-stage-actions-split { flex-direction: column-reverse; align-items: stretch; }
+  .f1-stage-actions > button, .f1-stage-actions-split > button { width: 100%; }
+}
+
+/* ── Data tables: qualifying / results / standings ─────────────────────── */
+.f1-quali-results-table, .f1-results-table, .f1-standings-content { width: 100%; min-width: 0; }
+.f1-table-head, .f1-table-row { display: grid; align-items: center; gap: 8px; font-size: 13px; padding: 8px 10px; }
+.f1-table-head { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
+.f1-table-row { min-height: 44px; }
+.f1-table-rows { display: flex; flex-direction: column; gap: 4px; }
+.f1-driver-col { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f1-driver-col strong { overflow: hidden; text-overflow: ellipsis; }
+.f1-team-col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--f1-muted); }
+.f1-time-col, .f1-sector-col, .f1-gap-col, .f1-pts-col, .f1-stat-col, .f1-pos-change { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.f1-pts-col, .f1-gap-col:last-child { text-align: right; }
+.f1-pos-badge { display: inline-grid; place-items: center; min-width: 28px; }
+
+/* Qualifying: Pos Driver Team S1 S2 S3 Time Gap (8 cols) */
+.f1-quali-results-table .f1-table-head,
+.f1-quali-results-table .f1-table-row { grid-template-columns: 36px minmax(0,1.5fr) minmax(0,1fr) repeat(3, minmax(52px, .6fr)) minmax(76px, .8fr) minmax(60px, .6fr); }
+/* Results: Pos Driver Team Grid Laps Pts (6 cols) */
+.f1-results-table .f1-table-head,
+.f1-results-table .f1-table-row { grid-template-columns: 36px minmax(0,1.6fr) minmax(0,1fr) minmax(70px,.7fr) 48px 48px; }
+/* Standings drivers (7 cols) / constructors (6 cols) */
+.f1-standings-content .f1-table-head:has(> :nth-child(7)),
+.f1-standings-content .f1-table-head:has(> :nth-child(7)) + .f1-table-rows .f1-table-row { grid-template-columns: 36px minmax(0,1.6fr) minmax(0,1fr) 44px 44px 64px 52px; }
+.f1-standings-content .f1-table-head:not(:has(> :nth-child(7))),
+.f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) + .f1-table-rows .f1-table-row { grid-template-columns: 36px minmax(0,1.6fr) 56px 64px 64px 52px; }
+
+/* Tablet: drop sector split times */
+@media (max-width: 860px) {
+  .f1-quali-results-table .f1-table-head,
+  .f1-quali-results-table .f1-table-row { grid-template-columns: 34px minmax(0,1.5fr) minmax(0,1fr) minmax(76px,.8fr) minmax(60px,.6fr); }
+  .f1-quali-results-table .f1-table-head > :nth-child(n+4):nth-child(-n+6),
+  .f1-quali-results-table .f1-table-row > :nth-child(n+4):nth-child(-n+6) { display: none; }
+}
+
+/* Phone: keep Pos / Driver / key numbers, hide the rest */
+@media (max-width: 560px) {
+  .f1-table-head, .f1-table-row { font-size: 12.5px; padding: 8px 6px; gap: 6px; }
+
+  .f1-quali-results-table .f1-table-head,
+  .f1-quali-results-table .f1-table-row { grid-template-columns: 30px minmax(0,1fr) 78px 58px; }
+  .f1-quali-results-table .f1-table-head > :nth-child(3),
+  .f1-quali-results-table .f1-table-row > :nth-child(3) { display: none; }
+
+  .f1-results-table .f1-table-head,
+  .f1-results-table .f1-table-row { grid-template-columns: 30px minmax(0,1fr) 74px 40px; }
+  .f1-results-table .f1-table-head > :nth-child(3), .f1-results-table .f1-table-head > :nth-child(5),
+  .f1-results-table .f1-table-row > :nth-child(3), .f1-results-table .f1-table-row > :nth-child(5) { display: none; }
+
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) + .f1-table-rows .f1-table-row { grid-template-columns: 30px minmax(0,1fr) 40px 48px; }
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) > :nth-child(3),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) > :nth-child(5),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) > :nth-child(6),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) + .f1-table-rows .f1-table-row > :nth-child(3),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) + .f1-table-rows .f1-table-row > :nth-child(5),
+  .f1-standings-content .f1-table-head:has(> :nth-child(7)) + .f1-table-rows .f1-table-row > :nth-child(6) { display: none; }
+
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))),
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) + .f1-table-rows .f1-table-row { grid-template-columns: 30px minmax(0,1fr) 44px 48px; }
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) > :nth-child(4),
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) > :nth-child(5),
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) + .f1-table-rows .f1-table-row > :nth-child(4),
+  .f1-standings-content .f1-table-head:not(:has(> :nth-child(7))) + .f1-table-rows .f1-table-row > :nth-child(5) { display: none; }
+}
+
+/* Player summary bar */
+.f1-player-summary-bar { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
+@media (max-width: 560px) { .f1-player-summary-bar { flex-direction: column; gap: 6px; } }
+
+/* ── 8. Starting grid: staggered on desktop, clean list on phones ──────── */
+.f1-grid-staggered { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+.f1-grid-slot { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 10px; }
+.f1-grid-slot.slot-right { margin-top: 24px; }
+.f1-slot-info { display: flex; flex-direction: column; min-width: 0; }
+.f1-slot-driver { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
+.f1-slot-team { font-size: 12px; color: var(--f1-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f1-grid-badge { font-size: 10px; padding: 2px 6px; white-space: nowrap; }
+@media (max-width: 640px) {
+  .f1-grid-staggered { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .f1-grid-slot.slot-right { margin-top: 0; margin-left: 20px; }   /* keeps a hint of the stagger */
+}
+
+/* ── 11. Finale ────────────────────────────────────────────────────────── */
+.f1-champions-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.f1-champ-box { min-width: 0; text-align: center; overflow-wrap: anywhere; }
+.f1-champ-box h2 { font-size: clamp(1.2rem, 5vw, 1.8rem); }
+.f1-champ-meta { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.f1-perf-stats { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.f1-perf-stat { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+.f1-perf-stat strong { font-size: clamp(1.1rem, 4.5vw, 1.6rem); }
+.f1-perf-stat .lbl { font-size: 10px; letter-spacing: .08em; }
+.f1-finale-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+@media (max-width: 560px) {
+  .f1-perf-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .f1-finale-actions { flex-direction: column; }
+  .f1-finale-actions > button { width: 100%; }
+}
+
+/* ── 12–13. Standings tabs + calendar modal ────────────────────────────── */
+.f1-tab-group { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.f1-tab-group::-webkit-scrollbar { display: none; }
+.f1-tab-btn { flex: 0 0 auto; padding: 0 14px; white-space: nowrap; }
+@media (max-width: 480px) {
+  .f1-stage-nav:has(.f1-tab-group) { flex-direction: column; align-items: stretch; }
+  .f1-tab-group { width: 100%; }
+  .f1-tab-btn { flex: 1 1 0; }
+}
+
+.f1-calendar-list-scroll { display: flex; flex-direction: column; gap: 10px; max-height: min(60dvh, 560px); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.f1-cal-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; padding: 12px; }
+.f1-cal-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.f1-cal-round-tag, .f1-cal-status { font-size: 11px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
+@media (max-width: 520px) {
+  .f1-cal-card { grid-template-columns: minmax(0, 1fr) auto; }
+  .f1-cal-round-tag { grid-column: 1; }
+  .f1-cal-status { grid-column: 2; grid-row: 1; }
+  .f1-cal-body { grid-column: 1 / -1; }
+  .f1-calendar-list-scroll { max-height: 66dvh; }
+}
+
+/* ── 14. Live in-race HUD: compact, out of the way on phones ───────────── */
+.f1-live-champ-hud { max-width: min(92vw, 320px); padding: 8px 10px; font-size: 12px; line-height: 1.35; }
+.f1-lch-metrics { display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 560px) {
+  .f1-live-champ-hud { font-size: 11px; padding: 6px 8px; max-width: 60vw; }
+  .f1-lch-title { font-size: 10px; letter-spacing: .08em; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .f1-modal-backdrop { align-items: flex-start; padding-block: calc(var(--f1-safe-top) + 8px); }
+  .f1-wizard-header, .f1-wizard-footer { position: static; }
+}
+
+/* ── Hover only where it exists; focus + reduced motion ────────────────── */
+@media (hover: hover) {
+  .f1-mode-btn:hover, .f1-driver-card:hover, .f1-grid-slot:hover { transform: translateY(-2px); }
+}
+.f1-modal-backdrop :focus-visible, .f1-hub-screen :focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .f1-modal-backdrop *, .f1-hub-screen * { transition: none !important; animation: none !important; }
+}

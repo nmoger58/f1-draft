@@ -1,0 +1,354 @@
+<USER_REQUEST>
+i dont know why but the race doesnt start for the mutliplayer there is a bug in the code please correct this and also remvoe thee buttons for multiplayer games - Pause
+Restart
+Speed
+1×
+2×
+5×
+10×
+
+ # Antigravity Task: Implement Custom Rooms and Public Multiplayer Rooms
+
+Create a premium cinematic 16:9 landscape image for the **CUSTOM ROOM** mode of a modern Formula racing simulator.
+
+Scene: A sleek, high-performance open-wheel formula racing car inside an exclusive, private motorsport garage at night. The car is surrounded by illuminated pit equipment, tool cabinets, racing tires, engineering monitors with abstract telemetry graphics, and a few shadowy team members preparing the car. Through the open garage entrance, a softly illuminated race circuit is visible.
+
+Visual message: A private racing session where the host creates a room, customizes race settings, and invites friends using a private room code. The atmosphere should communicate exclusivity, control, preparation, and personalized competition.
+
+Composition: Wide cinematic framing, with the race car as the main subject slightly right of center. Leave negative space on the left for a website heading and description. Use architectural lines, garage lighting, and subtle reflections to create depth.
+
+Style: Photorealistic AAA racing game, Unreal Engine 5-quality rendering, realistic carbon-fiber bodywork, detailed front and rear wings, polished garage surfaces, dramatic cinematic shadows, volumetric lighting, and premium motorsport photography.
+
+Color palette: Deep black, midnight navy, metallic silver, racing red, and restrained electric-blue highlights. Dark, sophisticated, powerful, and consistent with a premium racing simulator.
+
+Requirements: No real F1 team logos, no recognizable drivers, no readable text, no room-code graphics, no UI panels, no watermarks, and no borders. The image should visually distinguish private room creation from public matchmaking.
+
+Output: High-resolution 16:9 image, suitable for a dark-themed multiplayer game card.Upgrade the existing multiplayer system of my F1 racing simulator to support two distinct room types: **Custom Rooms** and **Public Rooms**.
+
+This must be a complete, working, end-to-end feature integrated into the existing landing page, backend, multiplayer networking, waiting room, race preparation, simulation, and results system. Do not build a disconnected mockup or a separate demo.
+
+## 1. Start by inspecting the existing project
+
+Before changing code:
+
+- Inspect the existing landing page, multiplayer UI, room creation and joining logic, server APIs, WebSocket events, participant management, and race lifecycle.
+- Identify the existing room model, room IDs, host controls, player display names, ready states, race configuration, and 2–20 player capacity.
+- Reuse the existing multiplayer architecture, room state, stable participant IDs, and event handlers wherever possible.
+- Preserve existing functionality, including driver/car/manager roulette, qualifying configuration, the 30-second car preparation phase, grid readiness, race synchronization, mobile HUD, and final results.
+- Implement the feature in the project's existing architecture. Do not create a second competing room manager or duplicate multiplayer state.
+
+## 2. Two multiplayer room types
+
+### A. Custom Room
+
+A Custom Room is created by a host who wants to race with invited friends.
+
+Required behavior:
+
+- Provide a **Create Custom Room** option on the multiplayer landing page.
+- Let the host configure the existing supported race settings, including circuit, race distance, qualifying, and other available options.
+- Generate a unique room ID and provide a copyable room invitation code.
+- Allow players to join using the room ID or an invitation link.
+- Keep the room private by default. It must not appear in the public room browser.
+- Show the host and all joined participants in a live waiting room.
+- Allow the host to control the start of the game, subject to existing server-side readiness and validation rules.
+- Display the host's room name, selected circuit, player count, race format, and waiting status in the host's room interface.
+- Preserve the existing host permissions and shared multiplayer configuration.
+- Provide clear states for waiting, preparing, racing, completed, and closed rooms.
+
+Custom room privacy must be enforced on the server, not just hidden in the frontend.
+
+### B. Public Room
+
+A Public Room is discoverable by other players without requiring them to know or enter a room ID.
+
+Required behavior:
+
+- Provide a **Create Public Room** option.
+- Let the host configure the supported race settings before creating the room.
+- Publish eligible public rooms to a live room browser on the multiplayer landing page.
+- Allow any eligible player to click **Join Race** and enter the room directly without manually entering a room ID.
+- After joining, collect or confirm the player's room-specific display name if it has not already been supplied.
+- Add the player to the existing waiting room and update the participant list for everyone immediately.
+- Show a room's current player count and maximum capacity, for example `7/20 Players`.
+- Do not allow joining a full, closed, cancelled, or already-started room through the waiting-room join flow.
+- If a race starts while someone is attempting to join, validate the room status again on the server and provide a clear message.
+- Allow the host to choose whether the room starts manually or automatically when a configured player threshold is reached, if compatible with the existing start system. Manual start should remain the default.
+- Provide a **Leave Room** action that returns the player to the multiplayer landing page without accidentally deleting the room or disrupting other players.
+
+Public visibility does not mean that every room is joinable at every stage. Only rooms in an eligible waiting state should offer direct joining.
+
+## 3. Multiplayer landing page design
+
+Create a premium multiplayer lobby section that fits the existing dark, cinematic racing-game design.
+
+Use the current site's visual language:
+
+- Midnight navy and near-black backgrounds.
+- Racing red and electric-blue accent colors.
+- Clean, modern typography.
+- Subtle borders, gradients, and restrained glow effects.
+- Responsive cards and clear visual hierarchy.
+- Smooth, lightweight hover and loading transitions.
+
+The landing page should have the following structure.
+
+### Top section
+
+Display:
+
+**MULTIPLAYER RACING**
+
+*Find your rivals. Join the grid. Fight for every position.*
+
+Show two prominent actions:
+
+1. **Create Custom Room**
+2. **Create Public Room**
+
+Also provide a compact option to join a private room using an invitation code.
+
+### Public room browser
+
+Below the creation actions, show a section titled:
+
+**LIVE PUBLIC ROOMS**
+
+Subtitle:
+
+*Races are forming right now. Find a grid and join the action.*
+
+Display actual public rooms created by real users, not hardcoded sample rooms.
+
+Each room card should display:
+
+- Room name.
+- Host's room display name.
+- Circuit name and, where available, its thumbnail.
+- Current players and maximum capacity.
+- Race format and lap count, if applicable.
+- Qualifying enabled/disabled, if supported by the configuration.
+- Room status, such as `WAITING`, `ALMOST FULL`, or `FULL`.
+- A **Join Race** action when joining is allowed.
+
+Example visual layout only:
+
+`MONACO NIGHT SHOWDOWN`
+Host: ApexRacer
+Circuit: Monaco
+Players: 7/20
+Format: 15 laps
+Status: WAITING
+[ JOIN RACE ]
+
+`SILVERSTONE OPEN GRID`
+Host: Velocity
+Circuit: Silverstone
+Players: 12/20
+Format: 20 laps
+Status: ALMOST FULL
+[ JOIN RACE ]
+
+These are illustrative examples, not real room data. Never display them as active rooms unless actual users have created those rooms.
+
+### Room browser controls
+
+Include:
+
+- Search by room name or host.
+- Filter by circuit.
+- Filter by race format or qualifying availability, where supported.
+- Sort by newest, players waiting, or available slots.
+- Refresh automatically when room state changes.
+- A manual refresh option as a fallback.
+- Clear loading, empty, error, and disconnected states.
+
+If there are no eligible public rooms, display a useful empty state:
+
+**NO PUBLIC RACES YET**
+
+*Start a public room and invite racers to join your grid.*
+
+Provide a **Create Public Room** action.
+
+Do not fill the empty state with fake players, invented rooms, or fabricated live activity.
+
+## 4. Real-time room discovery
+
+The public room browser must be connected to the actual backend.
+
+Implement or extend the existing room discovery API and real-time events as appropriate.
+
+The system should:
+
+1. Fetch the initial list of eligible public rooms.
+2. Subscribe to room updates through the existing real-time transport.
+3. Update room cards when a room is created, a player joins or leaves, the host changes settings, or the room becomes full.
+4. Remove rooms from the eligible list when they start, close, or become otherwise ineligible.
+5. Handle reconnections by fetching a fresh room list and reconciling it with the current UI.
+6. Prevent duplicate room cards, duplicate participant counts, and stale updates.
+7. Avoid creating a new polling loop or event listener every time the user opens the multiplayer page.
+
+Use the project's existing WebSocket or Socket.IO architecture if present.
+
+Use server-side timestamps and stable room IDs. Do not use the display name as the room's unique identifier.
+
+## 5. Room lifecycle and visibility rules
+
+Implement a clear room lifecycle using the existing architecture, extending it only where needed.
+
+Suggested states:
+
+- `WAITING`: room accepts eligible players.
+- `PREPARING`: race configuration and existing selection/preparation stages are in progress.
+- `RACING`: the race has started.
+- `COMPLETED`: race has finished and results are available.
+- `CLOSED`: room is no longer available.
+
+Rules:
+
+- Only Public Rooms in `WAITING` state appear in the joinable public browser.
+- Custom Rooms never appear in public discovery.
+- A Public Room must stop accepting new waiting-room participants when the host starts the game.
+- Existing participants must transition through the current shared multiplayer stages together.
+- Do not treat `PREPARING` as joinable unless the existing game explicitly supports safe late joining.
+- Remove stale room listings when a room closes or the host abandons it.
+- Define a safe expiration policy for abandoned waiting rooms.
+- Do not remove a room merely because one participant disconnects if the room still has a valid host and other participants.
+- If the host disconnects, follow the existing host-recovery policy or close the room safely after a defined grace period.
+- Reconcile all room transitions on the server.
+
+## 6. Direct joining without a room ID
+
+This is a critical requirement.
+
+For Public Rooms, the player must be able to:
+
+1. Open the multiplayer landing page.
+2. See other actual public rooms currently waiting.
+3. Click **Join Race** on a room card.
+4. Enter or confirm their room-specific display name if required.
+5. Join that exact room and appear in its waiting room.
+
+The player must never have to copy or type a room ID for this flow.
+
+Internally, the frontend should submit the selected room's stable identifier to the backend. The server must validate that the room still exists, is public, is waiting, and has available capacity.
+
+For Custom Rooms, preserve joining through an invitation code or link.
+
+Do not accidentally allow a player to bypass private-room restrictions by guessing or submitting a custom room ID through the public join endpoint.
+
+## 7. Shared multiplayer compatibility
+
+Integrate room types with the existing multiplayer features rather than implementing a separate race flow.
+
+Preserve and correctly connect:
+
+- Room-specific display names and stable participant IDs.
+- Host permissions and ready states.
+- Driver Roulette.
+- Car Roulette.
+- Manager Roulette, if enabled in the current game.
+- Final selection confirmation.
+- Optional qualifying.
+- Starting grid and grid positions.
+- The existing 30-second car setup preparation stage.
+- Setup locking and grid readiness.
+- Synchronized final countdown and lights out.
+- Shared race clock and live race updates.
+- Up to 20 human participants, subject to actual supported capacity.
+- Race completion, retirement and disconnect handling.
+- Final leaderboard and persistent results.
+
+The room's configuration must be stored on the server and shared consistently with all participants.
+
+Do not create separate room-specific implementations of these existing systems.
+
+## 8. Backend security and correctness
+
+Validate all important operations on the server:
+
+- Room creation and room type.
+- Room capacity.
+- Private versus public visibility.
+- Host-only settings and start commands.
+- Join eligibility and room lifecycle.
+- Participant identity and reconnection.
+- Ready state and race transitions.
+- Room cleanup and host departure.
+
+Use atomic or otherwise race-safe capacity checks so two players cannot claim the final slot simultaneously.
+
+Do not trust client-supplied player counts, room status, permissions, or configuration.
+
+Prevent duplicate joins and duplicate participant records during reconnection or repeated requests.
+
+Do not expose private room IDs, invitation secrets, or private-room details in public room discovery responses.
+
+## 9. Mobile and desktop support
+
+Ensure the complete flow works on desktop, tablet, and mobile.
+
+- Use responsive room cards.
+- Keep Create Room and Join Race actions easy to tap.
+- Prevent horizontal overflow.
+- Keep the public room browser readable at narrow widths.
+- Show player counts and room status without clutter.
+- Preserve the existing mobile racing HUD and multiplayer preparation controls.
+- Provide clear feedback for full rooms, expired rooms, failed joins, network loss, and reconnection.
+
+## 10. Testing and acceptance criteria
+
+Implement tests or repeatable validation procedures for the following scenarios:
+
+1. A player creates a private Custom Room. It never appears in public discovery.
+2. A player creates a Public Room. It appears in the live public room browser.
+3. A second player joins by clicking **Join Race**, without entering a room ID.
+4. A third player joins the same room, and all clients show the correct participant count.
+5. A player leaves, and the room count updates exactly once.
+6. A room reaches capacity, and the Join Race action is disabled or replaced with a full-room state.
+7. Two players try to claim the last slot at the same time; capacity is never exceeded.
+8. A player tries to join after the host starts the game; the server rejects the request cleanly.
+9. A player guesses a private room ID and attempts to use the public join flow; access is denied.
+10. A public room closes or expires and disappears from discovery.
+11. A client reconnects and sees the correct room list and participant state without duplicates.
+12. The host disconnects, and the configured host recovery or room shutdown behavior works.
+13. The same user can use a different display name in a different room, if supported by the existing room-specific naming model.
+14. A public room successfully completes the entire existing multiplayer race lifecycle and produces the correct final results.
+15. The room browser remains responsive and usable with many rooms and on mobile.
+
+Test with multiple browser sessions or clients, not just one frontend instance.
+
+## 11. Implementation rules
+
+- Do not replace the entire landing page.
+- Do not remove or regress existing game modes.
+- Do not hardcode sample rooms or simulated online players.
+- Do not create a separate in-memory-only frontend room list disconnected from the real server.
+- Do not implement fake Join Race buttons.
+- Do not claim that multiplayer works without exercising the actual network flow.
+- Follow existing code conventions and use the current backend, storage, and real-time networking approach.
+- Keep room discovery efficient and clean up event subscriptions properly.
+- Make incremental changes and check the existing app after each major step.
+
+## 12. Final deliverable
+
+After implementation, provide a report containing:
+
+1. Files changed and the purpose of each change.
+2. How Custom Rooms differ from Public Rooms.
+3. How real-time public room discovery works.
+4. How direct joining without a room ID is validated.
+5. How room visibility, capacity, reconnects, and cleanup are enforced.
+6. Tests performed and their actual results.
+7. Any remaining limitations or deployment configuration needed.
+
+**Definition of done:** A player can create a private Custom Room using an invitation code, or create a Public Room that appears to other players on the multiplayer landing page. Other players can click Join Race and enter that public room without typing a room ID. The entire flow must use real server-backed multiplayer state and remain compatible with the existing racing simulator.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-29T23:02:01+05:30.
+
+The user has uploaded 1 image(s):
+- C:/Users/rajmo/.gemini/antigravity/brain/0ef0c26e-4502-4711-90ec-3eef60993289/.user_uploaded/media_1793294368467_69c5dde0.png
+You can embed this image in an artifact if you need the USER to review it.
+</ADDITIONAL_METADATA>

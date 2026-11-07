@@ -43,6 +43,11 @@ app.add_middleware(
 os.makedirs("public", exist_ok=True)
 app.mount("/static", StaticFiles(directory="public"), name="static")
 
+# Mount Autonomous F1 Simulator & Multiplayer Suite
+_simulator_dir = os.path.join(os.path.dirname(__file__), "datasets", "f1-simulator")
+if os.path.exists(_simulator_dir):
+    app.mount("/simulator", StaticFiles(directory=_simulator_dir, html=True), name="simulator")
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     with open("public/index.html", "r", encoding="utf-8") as f:

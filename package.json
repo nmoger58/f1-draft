@@ -1,0 +1,30 @@
+{
+  "name": "f1-autonomous-simulator-suite",
+  "version": "2.0.0",
+  "description": "Formula 1 Autonomous Racing Simulator & 20-Player Real-Time Multiplayer Arena",
+  "type": "module",
+  "main": "datasets/f1-simulator/server.js",
+  "scripts": {
+    "start": "node datasets/f1-simulator/server.js",
+    "test": "cd datasets/f1-simulator && node run_all_tests.mjs",
+    "server": "node datasets/f1-simulator/server.js",
+    "build": "echo 'Deploy ready'"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "formula1",
+    "racing-simulator",
+    "multiplayer",
+    "autonomous-racing",
+    "f1",
+    "physics-engine",
+    "websockets"
+  ],
+  "author": "nmoger58",
+  "license": "MIT"
+}

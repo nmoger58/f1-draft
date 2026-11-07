@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>F1 Autonomous Racing Simulator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Titillium+Web:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/landing-responsive.css">
+  <link rel="stylesheet" href="styles/championship-view.css">
+  <link rel="stylesheet" href="styles/multiplayer-mobile.css">
+  <style>
+    /* Inline critical styles to prevent FOUC */
+    :root { color-scheme: dark; }
+    body { background: #0b0b10; color: #ececf4; }
+  </style>
+</head>
+<body>
+
+<!-- ── Championship Mode Screen Container ──────────────────────────────── -->
+<div id="championshipMount" style="display:none"></div>
+
+<!-- ── Quick Race Mode Screen Container ──────────────────────────────────── -->
+<div id="quickRaceMount" style="display:none"></div>
+
+<!-- ── F1 Draft Mode (Historic Season Draft) Container ──────────────────── -->
+<div id="draftModeMount" style="display:none"></div>
+
+<!-- ── Multiplayer / Head-to-Head 2–20 Player Screen Container ──────────── -->
+<div id="multiplayerMount" style="display:none"></div>
+
+<!-- ── Race Finished Quick Race Classification Banner ──────────────────── -->
+<div id="quickRaceFinishedBanner" style="display:none" class="race-finished-banner qr-finished-banner">
+  <div class="rf-content">
+    <span class="rf-badge">🏁 CHEQUERED FLAG</span>
+    <span class="rf-text">Grand Prix Complete! Official classification ready.</span>
+    <button type="button" class="f1-btn-primary f1-btn-gold" id="btnQRViewOfficialResults">VIEW OFFICIAL RESULTS →</button>
+  </div>
+</div>
+
+<!-- ── Race Finished Championship Transition Banner ───────────────────── -->
+<div id="raceFinishedBanner" style="display:none" class="race-finished-banner">
+  <div class="rf-content">
+    <span class="rf-badge">🏁 CHEQUERED FLAG</span>
+    <span class="rf-text">Grand Prix Complete! Official classification ready.</span>
+    <button type="button" class="f1-btn-primary f1-btn-gold" id="btnViewOfficialResults">VIEW OFFICIAL RESULTS →</button>
+  </div>
+</div>
+
+<!-- ── Premium Cinematic Landing Page View ────────────────────────────── -->
+<div id="landingView" class="landing-view" style="display:block"></div>
+
+<!-- ── Simulator Header ────────────────────────────────────────────────── -->
+<header id="simHeader" style="display:none">
+  <div class="header-main-bar">
+    <div class="brand" id="brandLogoHome" role="button" tabindex="0" title="Return to Landing Page">
+      <span class="flag">F1</span>
+      <span class="brand-name">Autonomous Racing Simulator</span>
+      <span class="brand-name-mobile">F1 SIM</span>
+    </div>
+    <div class="header-right-controls">
+      <button type="button" class="nav-mobile-toggle" id="btnNavToggle" aria-label="Toggle Navigation Menu">☰</button>
+    </div>
+  </div>
+
+  <div class="header-nav-collapse" id="headerNavCollapse">
+    <div class="header-mode-nav">
+      <button type="button" class="f1-mode-nav-btn" id="navHome" title="Return to Main Menu (Landing Page)">🏠 MAIN MENU</button>
+      <button type="button" class="f1-mode-nav-btn active" id="navQuickPlay">⚡ QUICK PLAY</button>
+      <button type="button" class="f1-mode-nav-btn" id="navChampionship">🏆 CHAMPIONSHIP</button>
+      <button type="button" class="f1-mode-nav-btn" id="navMultiplayer">👥 MULTIPLAYER</button>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="draft-pill-btn" id="btnDraftTeam" title="Draft Driver, Manager & Car">
+        <span class="draft-pill-icon">🏎️</span>
+        <span id="draftPillLabel">DRAFT TEAM</span>
+      </button>
+      <div class="grid-sel-wrap">
+        <label class="grp-l" for="gridSel" style="font:700 10px 'Rajdhani',sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Grid</label>
+        <select id="gridSel" aria-label="Number of cars on grid"></select>
+      </div>
+      <button class="theme-btn" id="toastOverlayBtn" type="button" title="Toggle Track Commentary Overlay">💬 TOASTS: ON</button>
+      <button class="theme-btn" id="btnOpenSettings" type="button" title="Configure Simulator & Team Radio Voice">⚙️ SETTINGS</button>
+      <button class="theme-btn" id="devTelemetryBtn" type="button" title="Toggle Developer Diagnostics Telemetry [~]">🛠️ DEV</button>
+      <button class="theme-btn" id="themeBtn" type="button">&#9681; THEME</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── Active Race Simulation Viewport ─────────────────────────────────── -->
+<div id="simulatorView" class="simulator-view" style="display:none">
+<!-- ── Circuit tab nav ─────────────────────────────────────────────────── -->
+<nav aria-label="Circuit selector">
+  <div class="tabs" id="tabs" role="tablist" aria-label="Circuits"></div>
+</nav>
+
+<!-- ── Flag status bar ─────────────────────────────────────────────────── -->
+<div class="flag-bar flag-red" id="flagBar">RED LIGHT — FORMATION</div>
+
+<!-- ── Main content ────────────────────────────────────────────────────── -->
+<main>
+  <div id="head">
+    <div class="eyebrow">Circuit</div>
+    <h1 id="circuitName">Loading…</h1>
+    <div class="loc" id="circuitLoc"></div>
+  </div>
+
+  <div class="layout">
+
+    <!-- Left: Map + telemetry + controls -->
+    <section class="mapcard" aria-label="Race circuit map">
+
+      <!-- SVG map -->
+      <div class="mapwrap">
+        <!-- ── FIA 5-Red-Light Gantry & Race Launch Challenge Overlay ── -->
+        <div class="gantry-overlay gantry-hidden" id="gantryOverlay" style="display:none">
+          <div class="gantry-chassis">
+            <div class="gantry-header">
+              <span class="gantry-title">FIA FORMULA 1 STARTING SEQUENCE</span>
+              <span class="gantry-driver-tag" id="gantryDriverTag">DRIVER (P1)</span>
+            </div>
+            <div class="gantry-lights" id="gantryLights">
+              <div class="g-light" id="gLight0"><i></i></div>
+              <div class="g-light" id="gLight1"><i></i></div>
+              <div class="g-light" id="gLight2"><i></i></div>
+              <div class="g-light" id="gLight3"><i></i></div>
+              <div class="g-light" id="gLight4"><i></i></div>
+            </div>
+
+            <!-- Launch Control Section (Active during FIA Starting Sequence) -->
+            <div class="launch-action-bar" id="launchActionBar">
+              <button type="button" class="btn-launch btn-launch-wait" id="btnLaunch" aria-label="Race Launch Trigger">
+                <span class="btn-launch-icon">🚦</span>
+                <span class="btn-launch-label" id="btnLaunchLabel">WAIT FOR LIGHTS OUT</span>
+              </button>
+              <div class="launch-feedback" id="launchFeedback">
+                <span class="launch-ms" id="launchMs">--- ms</span>
+                <span class="launch-quality" id="launchQuality">Press [SPACE] or Click LAUNCH when lights go out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Unified Bottom-Right Race HUD: Only DRS Button & Energy Deployment Bar ── -->
+        <div class="race-hud-cluster" id="raceHudCluster" role="region" aria-label="Race Cockpit Controls">
+          <!-- 1. DRS (Drag Reduction System) Button -->
+          <div class="race-hud-card race-hud-drs" id="drsHudCard">
+            <button class="btn-drs drs-disabled" id="btnDrs" type="button" aria-label="Toggle Drag Reduction System" title="Toggle DRS [D]">
+              <span class="btn-drs-icon">⚡</span>
+              <span class="btn-drs-label" id="drsStatusTxt">DRS</span>
+            </button>
+            <span class="visually-hidden" id="drsWingIcon">CLOSED</span>
+            <span class="visually-hidden" id="drsReasonTxt">Outside DRS Zone</span>
+          </div>
+
+          <!-- 2. Manual Battery Deployment & Hybrid ERS Bar -->
+          <div class="race-hud-card race-hud-battery tactical-col battery-tactical-col" id="batteryWidget" title="Click or Press [E] to Deploy Energy">
+            <div class="battery-vertical-container" title="Battery Energy State of Charge">
+              <div class="battery-pct-label" id="batteryPercentTxt">85%</div>
+              <div class="battery-vertical-track" aria-label="Battery State of Charge">
+                <div class="battery-vertical-fill fill-charging" id="batteryFill" style="height: 85%;"></div>
+                <div class="battery-tick tick-75"></div>
+                <div class="battery-tick tick-50"></div>
+                <div class="battery-tick tick-25"></div>
+              </div>
+              <div class="compact-ers-tag">ERS</div>
+            </div>
+
+            <!-- Hidden semantic hooks preserving JS handlers & test suites -->
+            <div class="visually-hidden">
+              <span class="battery-state-pill state-charging" id="batteryStatePill">CHARGING</span>
+              <button type="button" class="btn-battery-mode btn-mode-charge" id="btnBatteryMode" aria-label="Toggle Battery Mode">
+                <span class="btn-batt-icon" id="batteryModeIcon">🔋</span>
+                <span class="btn-batt-label" id="batteryModeLabel">ATTACK</span>
+                <span class="btn-batt-sub" id="batteryContextTxt">CHARGING</span>
+              </button>
+              <button type="button" class="btn-batt-lvl" id="btnBattLvl1">LVL 1</button>
+              <button type="button" class="btn-batt-lvl active" id="btnBattLvl2">LVL 2</button>
+              <button type="button" class="btn-batt-lvl" id="btnBattLvl3">LVL 3</button>
+              <div class="battery-status-desc" id="batteryReasonTxt">Recovering energy</div>
+              <div class="battery-stress-notice" id="batteryStressRow" style="display: none;">
+                <strong id="batteryStressVal">+35% Wear</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live In-Race Championship Projection HUD -->
+        <div id="liveChampHudMount"></div>
+
+        <!-- ── Compact Race Commentary Toast Overlay (Top-Left) ── -->
+        <div id="commentaryToastOverlay" class="commentary-toast-overlay" aria-live="polite" role="region" aria-label="Race Commentary Notifications"></div>
+
+        <!-- ── Central Persistent Player Investigation Notification Overlay ── -->
+        <div id="centralInvestigationOverlay" class="central-investigation-overlay" role="alert" aria-live="assertive" style="display: none;"></div>
+
+        <svg id="map" viewBox="0 0 800 560" role="img" aria-label="Circuit map with racing cars"></svg>
+        <div class="hud" id="hud">Loading track…</div>
+        <div class="zoombtns">
+          <button id="zIn"   type="button" aria-label="Zoom in">+</button>
+          <button id="zOut"  type="button" aria-label="Zoom out">&minus;</button>
+          <button id="zHome" type="button" aria-label="Whole track" title="Whole track">&#10530;</button>
+        </div>
+      </div>
+
+      <!-- Lap progress bar -->
+      <div class="bar"><i id="prog"></i></div>
+
+      <!-- Primary telemetry strip -->
+      <div class="telemetry">
+        <div class="tel">
+          <div class="tel-l" id="tLabel">Speed (est.)</div>
+          <div class="tel-v"><span id="tSpeed">0</span><small>km/h</small></div>
+        </div>
+        <div class="tel">
+          <div class="tel-l">Lap time</div>
+          <div class="tel-v" id="tTime">0:00.000</div>
+        </div>
+        <div class="tel">
+          <div class="tel-l">Lap</div>
+          <div class="tel-v" id="tLap">1</div>
+        </div>
+        <div class="tel">
+          <div class="tel-l">Available Grip</div>
+          <div class="tel-v"><span id="tGrip">100</span><small>%</small></div>
+        </div>
+      </div>
+
+      <!-- Extended telemetry row -->
+      <div class="telem-ext">
+        <div class="tbox">
+          <div class="tbox-l">Position</div>
+          <div class="tbox-v" id="tPos">P1</div>
+        </div>
+        <div class="tbox">
+          <div class="tbox-l">Gear / ERS</div>
+          <div class="tbox-v"><span id="tGear">1</span> <small id="tErs" style="color:#00e5ff;font-size:11px">85%</small></div>
+        </div>
+        <div class="tbox">
+          <div class="tbox-l">Tyre / State</div>
+          <div class="tbox-v">
+            <span class="tyre-badge" id="tyreBadge" style="background:#ffd60a">M</span>
+            <span id="tWear">0</span>%
+            <small id="tTyreTemp" style="font-size:11px">98°C</small>
+            <small id="tTyreAge" style="color:var(--muted);font-size:10px">(0L)</small>
+            <span class="tyre-cond-pill tyre-cond-optimal" id="tTyreCond">OPTIMAL</span>
+          </div>
+        </div>
+        <div class="tbox">
+          <div class="tbox-l">Brakes / Temp</div>
+          <div class="tbox-v"><span id="tBrakeTemp">340°C</span></div>
+        </div>
+        <div class="tbox">
+          <div class="tbox-l">Fuel Load</div>
+          <div class="tbox-v"><span id="tFuel">85.0</span><small>kg</small></div>
+        </div>
+        <div class="tbox">
+          <div class="tbox-l">Aero Wake</div>
+          <div class="tbox-v" id="tAeroStatus"><span class="aero-pill aero-clean">CLEAN AIR</span></div>
+        </div>
+      </div>
+
+      <!-- Throttle / Brake bars -->
+      <div class="pedal-row">
+        <span class="pedal-label">THROTTLE</span>
+        <div class="pedal-track"><i id="thBar" style="width:0%"></i></div>
+        <span id="tThrottle" style="font:700 12px 'Rajdhani',sans-serif;width:32px;text-align:right;color:var(--muted)">0</span>
+      </div>
+      <div class="pedal-row">
+        <span class="pedal-label">BRAKING</span>
+        <div class="pedal-track"><i id="brBar" style="width:0%"></i></div>
+        <span id="tBrake" style="font:700 12px 'Rajdhani',sans-serif;width:32px;text-align:right;color:var(--muted)">0</span>
+      </div>
+
+      <!-- ── Cockpit Tactical Command Center (Pit Stop & Tyre Strategy) ── -->
+      <div class="tactical-panel">
+        <div class="tactical-header">
+          <span class="tactical-title">⚡ PIT WALL STRATEGY &amp; TYRE MANAGEMENT &middot; <span id="tacticalDriver">DRIVER (P1)</span></span>
+          <span id="tPsychBadge"></span>
+          <span class="pit-status-badge pit-status-ready" id="pitStatusBadge">ON TRACK</span>
+        </div>
+
+        <div class="tactical-grid tactical-grid-pit">
+          <!-- Pit Stop & Tyre Strategy Column (Upgraded Live Tyre Degradation Bar) -->
+          <div class="tactical-col" id="tacticalPitCol">
+            <div class="tactical-col-header">
+              <span class="tactical-sub">TYRE LIFE & PIT STRATEGY</span>
+              <span class="pit-loss-est">~22s est. loss</span>
+            </div>
+
+            <!-- Live Tyre Degradation Progress Component -->
+            <div class="tyre-deg-widget" id="tyreDegWidget">
+              <div class="tdw-top-row">
+                <div class="tdw-compound-badge" id="tdwCompoundBadge">
+                  <span class="tdw-compound-pill" id="tdwCompoundPill" style="background:#ffd60a; color:#000;">M</span>
+                  <span class="tdw-compound-name" id="tdwCompoundName">MEDIUM</span>
+                </div>
+                <div class="tdw-metrics">
+                  <span class="tdw-metric-life">Life: <strong id="tdwLifeVal">100%</strong></span>
+                  <span class="tdw-metric-sep">&middot;</span>
+                  <span class="tdw-metric-wear">Wear: <strong id="tdwWearVal">0%</strong></span>
+                </div>
+              </div>
+
+              <!-- Animated Progress Bar representing Remaining Tyre Life -->
+              <div class="tdw-progress-track" aria-label="Remaining Tyre Life">
+                <div class="tdw-progress-fill tdw-healthy" id="tdwProgressFill" style="width: 100%;"></div>
+              </div>
+
+              <!-- Contextual Warning Notice -->
+              <div class="tdw-warning-row">
+                <span class="tdw-warning-icon" id="tdwWarningIcon">🟢</span>
+                <span class="tdw-warning-txt" id="tdwWarningTxt">Tyres in good condition.</span>
+              </div>
+            </div>
+
+            <!-- Pit Controls Row with BOX THIS LAP Action & Compound Selectors -->
+            <div class="pit-actions-row">
+              <button class="btn-box btn-box-active" id="btnBox" type="button" aria-label="Call Pit Stop">
+                📻 BOX THIS LAP [B]
+              </button>
+              <div class="compound-seg" id="compoundSeg" role="group" aria-label="Replacement Tyre Compound">
+                <button type="button" class="compound-pill compound-s" data-compound="soft" title="Soft (Fastest, High Degradation)">S</button>
+                <button type="button" class="compound-pill compound-m active" data-compound="medium" title="Medium (Balanced Performance)">M</button>
+                <button type="button" class="compound-pill compound-h" data-compound="hard" title="Hard (Durable, Long Stints)">H</button>
+                <button type="button" class="compound-pill compound-i" data-compound="intermediate" title="Intermediate (Damp to Moderate Rain)">I</button>
+                <button type="button" class="compound-pill compound-w" data-compound="wet" title="Wet (Heavy Rain, Standing Water)">W</button>
+              </div>
+            </div>
+            <div class="tactical-status-desc" id="pitReasonTxt">Fitting MEDIUM tyres on next stop</div>
+          </div>
+        </div>
+
+        <!-- Strategic Guidance Banner -->
+        <div class="tactical-advice" id="tacticalAdvice">
+          <span class="advice-tag">STRATEGY:</span>
+          <span class="advice-content" id="tacticalAdviceTxt">Tyres performing in optimal window. Clean air ahead.</span>
+        </div>
+      </div>
+
+      <!-- Controls row -->
+      <div class="controls">
+        <button class="btn primary" id="playBtn" type="button">Pause</button>
+        <button class="btn" id="restartBtn" type="button">Restart</button>
+        <button class="btn" id="btnRaceExitMenu" type="button" title="Return to Main Menu (Landing Page)">Main Menu</button>
+
+        <div class="grp">
+          <span class="grp-l">Speed</span>
+          <div class="seg" id="warpSeg">
+            <button type="button" data-w="1" aria-pressed="true">1&times;</button>
+            <button type="button" data-w="2">2&times;</button>
+            <button type="button" data-w="5">5&times;</button>
+            <button type="button" data-w="10">10&times;</button>
+          </div>
+        </div>
+
+        <div class="grp">
+          <span class="grp-l">Camera</span>
+          <div class="seg" id="viewSeg">
+            <button type="button" data-v="overview" aria-pressed="true">Whole track</button>
+            <button type="button" data-v="follow">Follow</button>
+          </div>
+          <button class="btn" id="chaseBtn" type="button" aria-pressed="true">Chase cam</button>
+        </div>
+
+        <div class="grp">
+          <span class="grp-l">Colour</span>
+          <div class="seg" id="modeSeg">
+            <button type="button" data-m="real" aria-pressed="true">Realistic</button>
+            <button type="button" data-m="sector">Sectors</button>
+            <button type="button" data-m="speed">Speed</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend" id="legend"></div>
+
+      <!-- Keyboard shortcuts hint -->
+      <div style="padding:6px 14px 10px;font-size:11px;color:var(--muted)">
+        <span class="kbd">Space</span> Pause &nbsp;
+        <span class="kbd">R</span> Restart &nbsp;
+        <span class="kbd">D</span> DRS &nbsp;
+        <span class="kbd">E</span> Attack/Charge &nbsp;
+        <span class="kbd">B</span> Pit Box &nbsp;
+        <span class="kbd">+/−</span> Zoom &nbsp;
+        <span class="kbd">1</span> Overview &nbsp;
+        <span class="kbd">2</span> Follow &nbsp;
+        <span class="kbd">3</span> Chase cam
+      </div>
+
+    </section>
+
+    <!-- Mobile Floating Sidebar Drawer Trigger -->
+    <button type="button" class="mobile-side-toggle" id="btnMobileSideToggle" aria-label="Toggle Race Order & Telemetry Sidebar">
+      <span>📊 RACE ORDER &amp; TELEMETRY</span>
+    </button>
+    <div class="side-backdrop" id="sideBackdrop" style="display:none"></div>
+
+    <!-- Right: Leaderboard + Weather + Race Control + Team Radio + circuit info -->
+    <aside class="side" id="side">
+
+      <!-- Mobile Drawer Header -->
+      <div class="side-mobile-header" id="sideMobileHeader">
+        <span class="side-mobile-title">📊 RACE CONTROL &amp; TELEMETRY</span>
+        <button type="button" class="side-mobile-close" id="btnSideMobileClose" aria-label="Close Sidebar">&times;</button>
+      </div>
+
+      <!-- Live leaderboard -->
+      <div class="panel">
+        <h2>Race order &middot; tap to follow</h2>
+        <div class="lhead">
+          <span>P</span><span></span><span>Driver</span>
+          <span></span><span></span>
+          <span style="text-align:right">Gap</span>
+          <span style="text-align:right">Last lap</span>
+          <span style="text-align:right">Wear</span>
+        </div>
+        <div id="board"></div>
+      </div>
+
+      <!-- ── Dynamic Weather & Radar Panel ── -->
+      <div class="panel" id="weatherPanel">
+        <div class="panel-header-row">
+          <h2>🌧 Dynamic Weather & Radar</h2>
+          <span class="weather-badge weather-dry" id="wBadge">BONE DRY</span>
+        </div>
+        <div class="weather-metrics">
+          <div class="wbox"><span class="wbox-l">Rainfall</span><span class="wbox-v" id="wRain">0%</span></div>
+          <div class="wbox"><span class="wbox-l">Track Wet</span><span class="wbox-v" id="wTrackWet">0%</span></div>
+          <div class="wbox"><span class="wbox-l">Track Temp</span><span class="wbox-v" id="wTrackTemp">32°C</span></div>
+          <div class="wbox"><span class="wbox-l">Air Temp</span><span class="wbox-v" id="wAirTemp">24°C</span></div>
+          <div class="wbox"><span class="wbox-l">Rubber Line</span><span class="wbox-v" id="wRubber">0%</span></div>
+          <div class="wbox"><span class="wbox-l">Drying Line</span><span class="wbox-v" id="wDryingLine">NO</span></div>
+        </div>
+        <!-- Weather Radar Forecast Table -->
+        <div class="radar-box">
+          <div class="radar-title">📡 WEATHER RADAR FORECAST</div>
+          <div class="radar-row"><span class="r-t">+2 min</span><span class="r-c" id="rad2m">Dry (0%)</span><span class="r-rec" id="radRec2m">Rec: S/M</span></div>
+          <div class="radar-row"><span class="r-t">+5 min</span><span class="r-c" id="rad5m">Dry (0%)</span><span class="r-rec" id="radRec5m">Rec: S/M</span></div>
+          <div class="radar-row"><span class="r-t">+10 min</span><span class="r-c" id="rad10m">Dry (0%)</span><span class="r-rec" id="radRec10m">Rec: S/M</span></div>
+        </div>
+        <!-- Weather Scenario Selector -->
+        <div class="weather-ctrls">
+          <label class="ctrl-sub" for="weatherPresetSel">Preset Scenario:</label>
+          <select id="weatherPresetSel" aria-label="Dynamic Weather Scenario">
+            <option value="DRY">Bone Dry (Sunny)</option>
+            <option value="INCOMING_SHOWER" selected>Incoming Shower (Lap 2-3 rain)</option>
+            <option value="DRYING_TRACK">Drying Track (Starts wet)</option>
+            <option value="DYNAMIC_MONSOON">Tropical Monsoon (Heavy)</option>
+            <option value="FULL_WET">Persistent Wet (Monsoon)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── FIA Race Control & Incident Management Panel ── -->
+      <div class="panel" id="raceControlPanel">
+        <div class="panel-header-row">
+          <h2>🚩 FIA Race Control</h2>
+          <span class="rc-flag-badge rc-green" id="rcFlagBadge">GREEN FLAG</span>
+        </div>
+        <div class="rc-director-panel">
+          <div class="rc-director-row">
+            <span class="rc-director-tag">AI RACE DIRECTOR:</span>
+            <span class="rc-director-status-pill">AUTONOMOUS</span>
+          </div>
+          <div class="rc-sc-status-box">
+            <span class="rc-sc-label">SAFETY CAR STATUS:</span>
+            <span class="rc-sc-value" id="rcScStatusVal">STANDBY (PIT LANE)</span>
+          </div>
+        </div>
+        <div class="rc-penalties" id="rcPenaltiesBox">
+          <div class="radar-title">⚖ PENALTY & INCIDENT INVESTIGATIONS</div>
+          <div id="penaltyList" class="penalty-list">
+            <div class="penalty-none">No active penalties or investigations</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Cockpit Live Team Radio Panel ── -->
+      <div class="panel" id="teamRadioPanel">
+        <div class="panel-header-row">
+          <h2>📻 Team Radio &middot; <span id="radioDriverTag">DRIVER</span></h2>
+          <div class="radio-audio-controls">
+            <button type="button" class="sound-toggle-btn active" id="radioSoundBtn" title="Toggle Radio Sound">🔊 SOUND</button>
+            <button type="button" class="sound-toggle-btn" id="radioVoiceBtn" title="Toggle Vocal Instructions">🗣️ VOICE</button>
+            <button type="button" class="sound-toggle-btn" id="radioSettingsBtn" title="Team Radio Voice Configuration">⚙️ VOICE</button>
+          </div>
+        </div>
+        <!-- Radio Mode Selector (OFF / ESSENTIAL / FULL) -->
+        <div class="radio-mode-bar" id="radioModeSelector">
+          <span class="rm-label">MODE:</span>
+          <button type="button" class="radio-mode-btn active" data-mode="full" title="All communications (Strategy, Overtake, Defend, Tyres, Weather)">FULL</button>
+          <button type="button" class="radio-mode-btn" data-mode="essential" title="Essential (Pits, Critical Tyres, Rain & Safety Flags)">ESSENTIAL</button>
+          <button type="button" class="radio-mode-btn" data-mode="off" title="Muted (Safety Flags only)">OFF</button>
+        </div>
+        <!-- Radio Filter Category Tabs -->
+        <div class="radio-filter-tabs" id="radioFilterTabs">
+          <button type="button" class="radio-tab active" data-cat="all">ALL</button>
+          <button type="button" class="radio-tab" data-cat="pit">PIT</button>
+          <button type="button" class="radio-tab" data-cat="tyre">TYRE</button>
+          <button type="button" class="radio-tab" data-cat="overtake">ATTACK</button>
+          <button type="button" class="radio-tab" data-cat="defend">DEFEND</button>
+          <button type="button" class="radio-tab" data-cat="weather">WEATHER</button>
+          <button type="button" class="radio-tab" data-cat="control">CONTROL</button>
+        </div>
+        <!-- Live Radio Message Stream -->
+        <div class="team-radio-feed" id="teamRadioFeed">
+          <div class="radio-empty">📻 Team radio frequency clear &middot; standing by</div>
+        </div>
+      </div>
+
+      <!-- Circuit info + driver stats injected here by app.js -->
+      <div id="sideInfo"></div>
+
+    </aside>
+  </div>
+
+  <p class="foot">
+    Track layouts are real GPS centrelines from <em>bacinger/f1-circuits</em> on GitHub, smoothed with centripetal Catmull-Rom splines.
+    Driver data reflects the 2025/2026 F1 season. Speed profiles are physics estimates scaled to official lap records.
+    Tyre wear, gaps, and AI decisions are computed from the simulation state — no data is fabricated.
+  </p>
+</main>
+
+<!-- ── Mobile Sticky Race Control Dock ── -->
+<div class="mobile-race-dock" id="mobileRaceDock" role="region" aria-label="Mobile Race Controls">
+  <div class="m-dock-inner">
+    <!-- Left: Secondary Race Actions (Pause & Pit Box) -->
+    <div class="m-dock-actions">
+      <!-- Pause / Resume -->
+      <button type="button" class="m-dock-btn m-btn-pause" id="mBtnPause" aria-label="Pause or Resume Race">
+        <span class="m-btn-icon" id="mPauseIcon">⏸️</span>
+        <span class="m-btn-sub" id="mPauseLabel">PAUSE</span>
+      </button>
+
+      <!-- Pit / BOX THIS LAP Action -->
+      <button type="button" class="m-dock-btn m-btn-box" id="mBtnBox" aria-label="Call Pit Stop">
+        <span class="m-btn-icon">📻</span>
+        <div class="m-btn-col">
+          <span class="m-btn-main">BOX [B]</span>
+          <span class="m-btn-sub" id="mBoxStatus">READY</span>
+        </div>
+        <span class="m-box-tyre-pill" id="mBoxTyrePill">M 100%</span>
+      </button>
+
+      <!-- Mobile Battery / ERS Attack Control -->
+      <button type="button" class="m-dock-btn m-btn-batt m-batt-charge" id="mBtnBattery" aria-label="Toggle Battery Mode">
+        <span class="m-btn-icon" id="mBatteryIcon">🔋</span>
+        <div class="m-btn-col">
+          <span class="m-btn-main" id="mBatteryLabel">CHARGE</span>
+          <span class="m-btn-sub" id="mBatteryStatus">85%</span>
+        </div>
+        <span class="m-box-tyre-pill m-batt-soc-pill" id="mBatterySocPill">85%</span>
+      </button>
+    </div>
+
+    <!-- Right: Prominent Always-Accessible Mobile DRS Control -->
+    <button type="button" class="m-drs-btn drs-disabled" id="mBtnDrs" aria-label="Toggle Drag Reduction System">
+      <div class="m-drs-icon-col">
+        <span class="m-drs-wing-icon" id="mDrsWingIcon">CLOSED</span>
+        <span class="m-drs-symbol">⚡</span>
+      </div>
+      <div class="m-drs-text-col">
+        <span class="m-drs-primary-label">DRS</span>
+        <span class="m-drs-status-pill" id="mDrsStatus">DISABLED</span>
+        <span class="m-drs-reason-desc" id="mDrsReason">Outside Zone</span>
+      </div>
+    </button>
+  </div>
+</div>
+</div> <!-- /#simulatorView -->
+
+<!-- ── Simulator & Team Radio Voice Settings Modal ───────────────────────── -->
+<div id="settingsModal" class="f1-modal-backdrop" style="display: none;">
+  <div class="f1-modal-card settings-modal-card">
+    <div class="f1-modal-header">
+      <div class="f1-modal-title-row">
+        <button type="button" class="f1-btn-ghost btn-modal-back" id="btnBackSettings">← BACK</button>
+        <span class="f1-modal-eyebrow">BROADCAST & AUDIO CONFIGURATION</span>
+        <h2 class="f1-modal-title">⚙️ SIMULATOR SETTINGS</h2>
+      </div>
+      <button type="button" class="f1-modal-close" id="btnCloseSettings" aria-label="Close Settings">✕</button>
+    </div>
+    <div class="f1-modal-body">
+      <!-- Section: Team Radio Voice -->
+      <section class="settings-section">
+        <div class="settings-section-header">
+          <h3>📻 TEAM RADIO VOICE & RACE ENGINEER AUDIO</h3>
+          <p class="settings-desc">Configure the synthetic race engineer voice, speech parameters, and motorsport delivery style.</p>
+        </div>
+
+        <!-- Enable / Mute Toggle -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoiceEnabled" class="settings-label">Spoken Team Radio</label>
+            <span class="settings-sublabel">Vocalize race engineer instructions independently of visual commentary toasts</span>
+          </div>
+          <div class="settings-control">
+            <label class="f1-switch">
+              <input type="checkbox" id="settingVoiceEnabled">
+              <span class="f1-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Voice Selection Dropdown -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoiceSelect" class="settings-label">Race Engineer Voice</label>
+            <span class="settings-sublabel" id="settingVoiceProviderNote">Populated from system TTS provider (Web Speech API). Availability depends on OS and browser.</span>
+          </div>
+          <div class="settings-control full-width">
+            <div class="voice-select-wrapper">
+              <select id="settingVoiceSelect" class="f1-select"></select>
+              <button type="button" class="f1-btn-subtle" id="btnPreviewVoice" title="Play Voice Preview">▶ PREVIEW</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Speech Speed / Rate Slider -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoiceRate" class="settings-label">Speech Speed (Rate)</label>
+            <span class="settings-sublabel">Pacing of engineer tactical delivery</span>
+          </div>
+          <div class="settings-control slider-grp">
+            <input type="range" id="settingVoiceRate" min="0.75" max="1.40" step="0.05" value="1.05" class="f1-range">
+            <span class="slider-val" id="settingVoiceRateVal">1.05x</span>
+          </div>
+        </div>
+
+        <!-- Speech Volume Slider -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoiceVolume" class="settings-label">Speech Volume</label>
+            <span class="settings-sublabel">Master audio volume for spoken radio messages</span>
+          </div>
+          <div class="settings-control slider-grp">
+            <input type="range" id="settingVoiceVolume" min="0.10" max="1.00" step="0.05" value="0.85" class="f1-range">
+            <span class="slider-val" id="settingVoiceVolumeVal">85%</span>
+          </div>
+        </div>
+
+        <!-- Voice Pitch Slider -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoicePitch" class="settings-label">Voice Pitch</label>
+            <span class="settings-sublabel">Audio frequency timbre (authentic race radio baritone/tenor)</span>
+          </div>
+          <div class="settings-control slider-grp">
+            <input type="range" id="settingVoicePitch" min="0.60" max="1.40" step="0.05" value="0.95" class="f1-range">
+            <span class="slider-val" id="settingVoicePitchVal">0.95</span>
+          </div>
+        </div>
+
+        <!-- Delivery Style Selection -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingVoiceStyle" class="settings-label">Delivery Style & Tone</label>
+            <span class="settings-sublabel">Contextual motorsport inflection based on race events</span>
+          </div>
+          <div class="settings-control full-width">
+            <select id="settingVoiceStyle" class="f1-select">
+              <option value="adaptive">Dynamic / Adaptive (Calm routine, assertive attacks, urgent hazards)</option>
+              <option value="calm">Calm & Composed (Steady, focused endurance pacing)</option>
+              <option value="assertive">Assertive & Decisive (Authoritative tactical calls)</option>
+              <option value="urgent">Urgent & Direct (High-tempo, immediate safety emphasis)</option>
+              <option value="neutral">Neutral & Uniform (Constant modulation)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Squelch Sound Effect Toggle -->
+        <div class="settings-row">
+          <div class="settings-label-grp">
+            <label for="settingSquelchEnabled" class="settings-label">Radio Squelch Chirp</label>
+            <span class="settings-sublabel">Realistic cockpit Web Audio frequency chirp before radio transmission</span>
+          </div>
+          <div class="settings-control">
+            <label class="f1-switch">
+              <input type="checkbox" id="settingSquelchEnabled" checked>
+              <span class="f1-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Actions -->
+      <div class="settings-footer-actions">
+        <button type="button" class="f1-btn-subtle" id="btnResetVoiceDefaults">↺ RESET TO DEFAULT</button>
+        <button type="button" class="f1-btn-subtle f1-btn-danger" id="btnMuteActiveRadio">🔇 MUTE / SILENCE NOW</button>
+        <button type="button" class="f1-btn-primary" id="btnSaveCloseSettings">SAVE & CLOSE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Developer Diagnostics Telemetry Mode (Phase 8) ────────────────────────── -->
+<div id="devTelemetryOverlay" class="dev-telemetry-overlay hidden" aria-label="Developer Telemetry Diagnostics"></div>
+
+<!-- ── Vendor Animation Engine (GSAP + ScrollTrigger) ────────────────────────── -->
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/ScrollTrigger.min.js"></script>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

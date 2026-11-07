@@ -1,0 +1,228 @@
+/**
+ * multiplayer-mobile.css
+ * Load AFTER your main stylesheet. Adds styles for the new mpx- classes and
+ * mobile-first overrides scoped to #multiplayerMount (and the timing tower).
+ */
+
+:root {
+  --mpx-bg: #15151e;
+  --mpx-panel: #1e1e2b;
+  --mpx-panel-2: #272738;
+  --mpx-line: rgba(255, 255, 255, 0.08);
+  --mpx-text: #fff;
+  --mpx-muted: #9aa0b4;
+  --mpx-red: #e10600;
+  --mpx-green: #22c55e;
+  --mpx-amber: #f59e0b;
+  --mpx-tap: 44px; /* minimum touch target */
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+.mpx-sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.mpx-upper { text-transform: uppercase; }
+.mpx-center { text-align: center; padding: 32px 16px; }
+.mpx-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.mpx-check { display: flex; gap: 10px; align-items: center; min-height: var(--mpx-tap); }
+.mpx-check input { width: 20px; height: 20px; flex: none; }
+
+#multiplayerMount button,
+#multiplayerMount select,
+#multiplayerMount input { touch-action: manipulation; }
+#multiplayerMount button { min-height: var(--mpx-tap); }
+#multiplayerMount button:focus-visible,
+#multiplayerMount input:focus-visible,
+#multiplayerMount select:focus-visible {
+  outline: 2px solid var(--mpx-red); outline-offset: 2px;
+}
+/* 16px inputs stop iOS Safari zooming the page on focus */
+#multiplayerMount input, #multiplayerMount select { font-size: 16px; }
+
+.mpx-lobby-title {
+  margin: 8px 0 4px; font-size: clamp(20px, 5vw, 30px); line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+/* ── Open-slot chips & readiness bar ───────────────────────────────────── */
+.mpx-open-slots {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 10px 12px; margin-top: 8px; border: 1px dashed var(--mpx-line);
+  border-radius: 10px; color: var(--mpx-muted); font-size: 12px; letter-spacing: .06em;
+}
+.mpx-open-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.mpx-slot-chip {
+  padding: 2px 8px; border-radius: 999px; background: var(--mpx-panel-2);
+  font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.mpx-ready-progress {
+  height: 6px; border-radius: 999px; background: var(--mpx-panel-2); overflow: hidden; margin-bottom: 8px;
+}
+.mpx-ready-fill {
+  height: 100%; background: var(--mpx-green); transition: width .3s ease;
+}
+
+/* ── Roulette reel ─────────────────────────────────────────────────────── */
+.mpx-steps { display: flex; justify-content: center; gap: 10px; list-style: none; padding: 0; margin: 0 0 8px; }
+.mpx-step {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--mpx-panel-2); color: var(--mpx-muted); font-size: 13px; font-weight: 700;
+}
+.mpx-step.current { background: var(--mpx-red); color: #fff; }
+.mpx-step.done { background: var(--mpx-green); color: #04210f; }
+
+.mpx-reel { position: relative; min-height: 280px; display: grid; place-items: center; }
+.mpx-reel-ticker {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  padding: 0 16px; font-size: clamp(22px, 7vw, 40px); font-weight: 800; letter-spacing: .04em;
+  color: var(--mpx-muted); filter: blur(1.5px); text-transform: uppercase;
+  transition: opacity .25s ease;
+}
+.mpx-reel-result { opacity: 0; transform: scale(.94); transition: opacity .35s ease, transform .35s ease; }
+.mpx-reel.is-revealed .mpx-reel-ticker { opacity: 0; pointer-events: none; }
+.mpx-reel.is-revealed .mpx-reel-result { opacity: 1; transform: none; }
+
+/* ── Timing tower ──────────────────────────────────────────────────────── */
+#mpTimingTowerMount {
+  position: absolute; z-index: 30; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px); pointer-events: none;
+}
+.mpx-tower {
+  pointer-events: auto; width: 260px; max-width: 60vw; border-radius: 12px; overflow: hidden;
+  background: rgba(21, 21, 30, .88); backdrop-filter: blur(6px); border: 1px solid var(--mpx-line);
+  color: var(--mpx-text); font-size: 12px;
+}
+.mpx-tower-head {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 8px 12px; background: transparent; border: 0; color: inherit; cursor: pointer;
+  font-weight: 700; letter-spacing: .06em; text-align: left;
+}
+.mpx-tower-chevron { transition: transform .2s ease; }
+.mpx-tower.tower-collapsed .mpx-tower-chevron { transform: rotate(-90deg); }
+.mpx-tower.tower-collapsed .mpx-tower-list { display: none; }
+.mpx-tower-list { max-height: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain; }
+.mpx-tower-row {
+  display: grid; grid-template-columns: 22px 46px 1fr auto; gap: 6px; align-items: center;
+  padding: 4px 12px; border-top: 1px solid var(--mpx-line);
+}
+.mpx-tower-row.row-me { background: rgba(225, 6, 0, .22); font-weight: 700; }
+.mpx-tower-row.row-finished { color: var(--mpx-green); }
+.mpx-t-pos { color: var(--mpx-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.mpx-t-tag { border-left: 3px solid var(--mpx-red); padding-left: 6px; font-weight: 700; }
+.mpx-t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mpx-t-gap { font-variant-numeric: tabular-nums; color: var(--mpx-muted); }
+
+/* ── Sticky action footers (thumb reach) ───────────────────────────────── */
+.mpx-sticky-footer {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+}
+.mp-footer-actions-right { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* ══ Mobile (≤ 640px) ═══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  #multiplayerMount .f1-modal-backdrop {
+    align-items: stretch; justify-content: stretch; padding: 0;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #multiplayerMount .mpx-screen {
+    width: 100%; max-width: none; min-height: 100dvh; margin: 0; border-radius: 0;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: 0; box-sizing: border-box;
+    display: flex; flex-direction: column;
+  }
+  #multiplayerMount .mpx-modal-body { flex: 1; overflow-y: auto; }
+
+  /* Sticky bottom bar */
+  #multiplayerMount .mpx-sticky-footer {
+    position: sticky; bottom: 0; z-index: 5; margin-top: auto;
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--mpx-bg) 80%, transparent);
+    flex-wrap: nowrap;
+  }
+  #multiplayerMount .mpx-sticky-footer > button,
+  #multiplayerMount .mp-footer-actions-right > button { flex: 1; }
+  #multiplayerMount .mp-footer-actions-right { flex: 1; flex-wrap: nowrap; }
+  #multiplayerMount .mpx-leave-btn { flex: 0 0 auto; }
+  #multiplayerMount .mp-waiting-host-note { font-size: 12px; text-align: center; flex: 1; }
+
+  /* Forms: single column */
+  #multiplayerMount .mp-form-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  #multiplayerMount .f1-col-half, #multiplayerMount .f1-col-full { grid-column: 1 / -1; width: 100%; }
+  #multiplayerMount .mp-type-toggle-group { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  #multiplayerMount .mp-type-pill { min-height: 56px; }
+
+  /* Hub */
+  #multiplayerMount .mp-hub-dual-actions { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  #multiplayerMount .mp-mode-card-img-wrap { display: none; }
+  #multiplayerMount .mp-private-join-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+  #multiplayerMount .mp-private-inputs-row { display: flex; gap: 8px; }
+  #multiplayerMount .mp-private-inputs-row input { flex: 1; min-width: 0; }
+  #multiplayerMount .mp-browser-controls { display: grid; gap: 8px; }
+  #multiplayerMount .mp-filters-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #multiplayerMount .mp-filters-wrap select:first-child { grid-column: 1 / -1; }
+  #multiplayerMount .mp-public-rooms-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  #multiplayerMount .mp-room-card-bottom { display: grid; gap: 10px; }
+  #multiplayerMount .mp-btn-join-direct,
+  #multiplayerMount .mp-btn-join-disabled { width: 100%; }
+
+  /* Lobby header: wrap pills instead of overflowing */
+  #multiplayerMount .mp-room-badge-group,
+  #multiplayerMount .mp-room-meta-strip { display: flex; flex-wrap: wrap; gap: 6px; }
+  #multiplayerMount .mp-room-meta-strip { font-size: 12px; }
+
+  /* Tables → stacked cards */
+  #multiplayerMount .mpx-table,
+  #multiplayerMount .mpx-table tbody { display: block; width: 100%; }
+  #multiplayerMount .mpx-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0);
+  }
+  #multiplayerMount .mpx-table tr {
+    display: block; margin-bottom: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--mpx-panel); border: 1px solid var(--mpx-line);
+  }
+  #multiplayerMount .mpx-table tr.mp-row-me { border-color: var(--mpx-red); }
+  #multiplayerMount .mpx-table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    width: auto !important; padding: 3px 0; border: 0; text-align: right;
+  }
+  #multiplayerMount .mpx-table td::before {
+    content: attr(data-label); color: var(--mpx-muted); font-size: 11px;
+    letter-spacing: .06em; text-transform: uppercase; text-align: left; flex: none;
+  }
+
+  /* Lobby table: compact 3-column row, no labels */
+  #multiplayerMount .mpx-lobby-table tr {
+    display: grid; grid-template-columns: 32px 1fr auto; gap: 8px; align-items: center;
+  }
+  #multiplayerMount .mpx-lobby-table td { display: flex; text-align: left; padding: 0; }
+  #multiplayerMount .mpx-lobby-table td::before { display: none; }
+  #multiplayerMount .mpx-lobby-table .mp-cell-name { gap: 6px; flex-wrap: wrap; justify-content: flex-start; min-width: 0; }
+  #multiplayerMount .mpx-lobby-table .mp-name-text { overflow-wrap: anywhere; }
+
+  /* Podium: shrink to fit */
+  #multiplayerMount .mp-podium-showcase { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-items: end; }
+  #multiplayerMount .mp-podium-card { padding: 8px 4px; font-size: 11px; min-width: 0; }
+  #multiplayerMount .mp-podium-name { overflow-wrap: anywhere; font-size: 12px; }
+
+  /* Roulette card */
+  #multiplayerMount .mp-roulette-card-center { width: 100%; max-width: 360px; margin: 0 auto; }
+  #multiplayerMount .mp-card-stats-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+  /* Timing tower: compact, top-left clear of right-hand controls */
+  #mpTimingTowerMount { right: auto; left: calc(env(safe-area-inset-left, 0px) + 8px); }
+  .mpx-tower { width: min(220px, 55vw); font-size: 11px; }
+  .mpx-tower-row { padding: 3px 8px; grid-template-columns: 18px 40px 1fr auto; }
+}
+
+/* Landscape phones: keep the tower out of the way */
+@media (max-height: 480px) and (orientation: landscape) {
+  .mpx-tower-list { max-height: 45vh; }
+  #multiplayerMount .mpx-reel { min-height: 200px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mpx-reel-ticker, .mpx-reel-result, .mpx-ready-fill, .mpx-tower-chevron { transition: none; }
+}

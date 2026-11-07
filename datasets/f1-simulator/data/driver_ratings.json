@@ -1,0 +1,565 @@
+{
+  "drivers": {
+    "AIT": {
+      "driver_rating": 81.01185305468813,
+      "tyre_z": 0.3156750931480756,
+      "consistency_z": 1.5444478858673383,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.7205665856359731,
+      "deg_per_lap": 0.04463036496167479,
+      "laps_in_data": 70
+    },
+    "ALB": {
+      "driver_rating": 80.54115300261424,
+      "tyre_z": 0.17021871683554887,
+      "consistency_z": 0.1055639146525054,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.7547043364427891,
+      "deg_per_lap": 0.04523004642756004,
+      "laps_in_data": 6781
+    },
+    "ALO": {
+      "driver_rating": 76.97980436547788,
+      "tyre_z": 0.7566163792614718,
+      "consistency_z": 0.40572714988429526,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.9353457440757381,
+      "deg_per_lap": 0.04281247066560303,
+      "laps_in_data": 6912
+    },
+    "ANT": {
+      "driver_rating": 82.17641923761111,
+      "tyre_z": 1.5697033507702194,
+      "consistency_z": -0.12047269461252771,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.4741906531163331,
+      "deg_per_lap": 0.039460309699356176,
+      "laps_in_data": 2060
+    },
+    "ARO": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.2680240956183487,
+      "consistency_z": -1.8804099103814473,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.3930744286054779,
+      "deg_per_lap": 0.04482681850172534,
+      "laps_in_data": 35
+    },
+    "BEA": {
+      "driver_rating": 83.75919906211449,
+      "tyre_z": -0.33841012959746747,
+      "consistency_z": 0.20996323389930566,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.45634004917257986,
+      "deg_per_lap": 0.04732700016690744,
+      "laps_in_data": 2094
+    },
+    "BEG": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.21650559037468983,
+      "consistency_z": -2.5,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.45922882462161185,
+      "deg_per_lap": 0.045039216840855927,
+      "laps_in_data": 20
+    },
+    "BOR": {
+      "driver_rating": 79.86145103699585,
+      "tyre_z": -0.4445554249137017,
+      "consistency_z": 0.24969654155777996,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.4302835415762389,
+      "deg_per_lap": 0.04776461155188583,
+      "laps_in_data": 1932
+    },
+    "BOT": {
+      "driver_rating": 77.94169111696915,
+      "tyre_z": -0.6999721236963068,
+      "consistency_z": -0.5815036611073693,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 1.1790831299962465,
+      "deg_per_lap": 0.04881763283717089,
+      "laps_in_data": 7725
+    },
+    "BRO": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.20288875035552084,
+      "consistency_z": 0.05187170061745641,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5150015528731967,
+      "deg_per_lap": 0.04509535577948778,
+      "laps_in_data": 19
+    },
+    "COL": {
+      "driver_rating": 77.88038569983694,
+      "tyre_z": -1.6250436913077673,
+      "consistency_z": 0.48890064631518027,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.6484992371678783,
+      "deg_per_lap": 0.052631479213503536,
+      "laps_in_data": 2178
+    },
+    "CRA": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.17490507207169573,
+      "consistency_z": 0.4270123999624578,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5476553930607637,
+      "deg_per_lap": 0.04521072571815619,
+      "laps_in_data": 18
+    },
+    "DEV": {
+      "driver_rating": 80.00700650612718,
+      "tyre_z": -0.3906940261962932,
+      "consistency_z": 1.4955734175858157,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5238498120313304,
+      "deg_per_lap": 0.04754255402951165,
+      "laps_in_data": 514
+    },
+    "DOO": {
+      "driver_rating": 80.11732045198151,
+      "tyre_z": -0.2893348140571094,
+      "consistency_z": 1.8721920284864306,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.48626445345931435,
+      "deg_per_lap": 0.04712467450812167,
+      "laps_in_data": 252
+    },
+    "ERI": {
+      "driver_rating": 79.7363265445512,
+      "tyre_z": 0.5024200585287627,
+      "consistency_z": 0.742053822394931,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.6903824255776557,
+      "deg_per_lap": 0.043860460627295074,
+      "laps_in_data": 955
+    },
+    "FIT": {
+      "driver_rating": 78.74654888110172,
+      "tyre_z": 0.5698214853803912,
+      "consistency_z": 0.8871871947698964,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.8198849478977897,
+      "deg_per_lap": 0.043582580843116364,
+      "laps_in_data": 113
+    },
+    "FOR": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.18017274611932815,
+      "consistency_z": -2.5,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.4055684954892695,
+      "deg_per_lap": 0.04518900837186466,
+      "laps_in_data": 18
+    },
+    "GAS": {
+      "driver_rating": 82.00229384818155,
+      "tyre_z": -0.4614545813815685,
+      "consistency_z": 0.3221113466088394,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.3495558387195552,
+      "deg_per_lap": 0.04783428268751965,
+      "laps_in_data": 8880
+    },
+    "GIO": {
+      "driver_rating": 81.80992001847864,
+      "tyre_z": -0.2928615796120632,
+      "consistency_z": 0.17749835336547887,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5696198158449182,
+      "deg_per_lap": 0.04713921450967708,
+      "laps_in_data": 2898
+    },
+    "GRO": {
+      "driver_rating": 83.03728836294152,
+      "tyre_z": -0.30363664665093093,
+      "consistency_z": -0.5137986215790258,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5086969746595391,
+      "deg_per_lap": 0.04718363750549678,
+      "laps_in_data": 2543
+    },
+    "HAD": {
+      "driver_rating": 74.81927184410061,
+      "tyre_z": -0.7191816929373004,
+      "consistency_z": 0.5581025824143799,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.04345601356793288,
+      "deg_per_lap": 0.04889682924597398,
+      "laps_in_data": 1774
+    },
+    "HAM": {
+      "driver_rating": 82.61204154514758,
+      "tyre_z": 1.9066487635353293,
+      "consistency_z": -0.06516667188301999,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.7576686977799217,
+      "deg_per_lap": 0.03807116524125317,
+      "laps_in_data": 9605
+    },
+    "HAR": {
+      "driver_rating": 80.0,
+      "tyre_z": -0.3859074564297431,
+      "consistency_z": 0.23295436599774577,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.6827731082719981,
+      "deg_per_lap": 0.047522820159832405,
+      "laps_in_data": 864
+    },
+    "HER": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.045634431340147344,
+      "consistency_z": -0.2801273614579287,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5729721775226206,
+      "deg_per_lap": 0.04574367731020781,
+      "laps_in_data": 26
+    },
+    "HIR": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.16964614339084683,
+      "consistency_z": -1.70811937071078,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.4736555559747117,
+      "deg_per_lap": 0.045232407009415235,
+      "laps_in_data": 15
+    },
+    "HUL": {
+      "driver_rating": 80.13854896300415,
+      "tyre_z": -0.6591104689636034,
+      "consistency_z": 0.43310948014720835,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.4101868793696413,
+      "deg_per_lap": 0.048649170115702044,
+      "laps_in_data": 6184
+    },
+    "IWA": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.20586358933242938,
+      "consistency_z": -2.274976247381942,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5158561906446812,
+      "deg_per_lap": 0.045083091237749076,
+      "laps_in_data": 22
+    },
+    "KUB": {
+      "driver_rating": 70.706981149846,
+      "tyre_z": 0.5261888891929448,
+      "consistency_z": -1.243627185281789,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 1.374865871482041,
+      "deg_per_lap": 0.043762467486145665,
+      "laps_in_data": 1091
+    },
+    "KVY": {
+      "driver_rating": 79.99299349387282,
+      "tyre_z": -0.7952171849717699,
+      "consistency_z": -0.36784289007752924,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5248661125783228,
+      "deg_per_lap": 0.04921030519304809,
+      "laps_in_data": 1881
+    },
+    "LAT": {
+      "driver_rating": 79.3658466206721,
+      "tyre_z": -0.5835655046555954,
+      "consistency_z": 0.7684059658920394,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.8399440049145107,
+      "deg_per_lap": 0.04833771649582678,
+      "laps_in_data": 2731
+    },
+    "LAW": {
+      "driver_rating": 81.2724415853637,
+      "tyre_z": -1.7943293100185396,
+      "consistency_z": 0.6727440962087663,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.2755556266480991,
+      "deg_per_lap": 0.05332940288350923,
+      "laps_in_data": 2571
+    },
+    "LEC": {
+      "driver_rating": 77.38795845485242,
+      "tyre_z": 2.1661479492013678,
+      "consistency_z": 0.20776252440115697,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.3787895242067686,
+      "deg_per_lap": 0.03700131284975758,
+      "laps_in_data": 8996
+    },
+    "LIN": {
+      "driver_rating": 80.68480178104917,
+      "tyre_z": -1.570549796331008,
+      "consistency_z": -0.27523809514503866,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.31817449001016673,
+      "deg_per_lap": 0.05240681406199965,
+      "laps_in_data": 915
+    },
+    "MAG": {
+      "driver_rating": 82.24306714118029,
+      "tyre_z": -1.2486194199587288,
+      "consistency_z": 0.26681817637871147,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.566298256058407,
+      "deg_per_lap": 0.05107957296807111,
+      "laps_in_data": 5761
+    },
+    "MAZ": {
+      "driver_rating": 71.51141091348155,
+      "tyre_z": -0.5198450153766223,
+      "consistency_z": 0.5966383811073617,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 1.3446168571111219,
+      "deg_per_lap": 0.04807501232715123,
+      "laps_in_data": 803
+    },
+    "MSC": {
+      "driver_rating": 78.55705846111775,
+      "tyre_z": -1.1088577595705778,
+      "consistency_z": 0.548951017849169,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.8336278330094233,
+      "deg_per_lap": 0.050503369438869725,
+      "laps_in_data": 1866
+    },
+    "NOR": {
+      "driver_rating": 85.07361475643523,
+      "tyre_z": 2.164257591549556,
+      "consistency_z": 0.2111038390267399,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.25859450581665633,
+      "deg_per_lap": 0.037009106337237634,
+      "laps_in_data": 8482
+    },
+    "OCO": {
+      "driver_rating": 82.14542717806268,
+      "tyre_z": 0.5968031314881443,
+      "consistency_z": 0.7632863471855791,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5733796419962451,
+      "deg_per_lap": 0.04347134204080268,
+      "laps_in_data": 7795
+    },
+    "PER": {
+      "driver_rating": 82.05830888303083,
+      "tyre_z": -0.66534866293571,
+      "consistency_z": 0.13056755491312316,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.8805234191027729,
+      "deg_per_lap": 0.04867488868095512,
+      "laps_in_data": 7679
+    },
+    "PIA": {
+      "driver_rating": 86.24848463960475,
+      "tyre_z": 0.8792935272612726,
+      "consistency_z": 0.07183390932156074,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.3438025170020417,
+      "deg_per_lap": 0.042306702449673626,
+      "laps_in_data": 4364
+    },
+    "RAI": {
+      "driver_rating": 87.48309883167535,
+      "tyre_z": -0.8327511289204284,
+      "consistency_z": -0.5483774703701725,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.15816975597321664,
+      "deg_per_lap": 0.04936504856764739,
+      "laps_in_data": 3829
+    },
+    "RIC": {
+      "driver_rating": 82.8238740537648,
+      "tyre_z": 0.2299736929768075,
+      "consistency_z": 0.36297954138023164,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.163037230343427,
+      "deg_per_lap": 0.04498369111062752,
+      "laps_in_data": 6119
+    },
+    "RUS": {
+      "driver_rating": 77.82358076238889,
+      "tyre_z": 1.511003719270271,
+      "consistency_z": -0.5254983549388714,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.1584989201013356,
+      "deg_per_lap": 0.03970231408553159,
+      "laps_in_data": 8349
+    },
+    "SAI": {
+      "driver_rating": 83.94237269492159,
+      "tyre_z": 0.8274009204706189,
+      "consistency_z": 0.11527630536056667,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.5080292197020002,
+      "deg_per_lap": 0.042520643119018806,
+      "laps_in_data": 8973
+    },
+    "SAR": {
+      "driver_rating": 79.472024714102,
+      "tyre_z": -1.2986512104161265,
+      "consistency_z": 1.0752630471297808,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.8322433869122765,
+      "deg_per_lap": 0.051285841941649084,
+      "laps_in_data": 1639
+    },
+    "SIR": {
+      "driver_rating": 75.66674991300194,
+      "tyre_z": 0.6577203447256746,
+      "consistency_z": 0.43226863200066873,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 1.1082227974499599,
+      "deg_per_lap": 0.043220195101369534,
+      "laps_in_data": 971
+    },
+    "STR": {
+      "driver_rating": 75.19323081115927,
+      "tyre_z": 1.3991536833950975,
+      "consistency_z": 0.380613276382342,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 1.0649178622997688,
+      "deg_per_lap": 0.04016344473633803,
+      "laps_in_data": 8531
+    },
+    "TSU": {
+      "driver_rating": 75.21888257982233,
+      "tyre_z": -0.15648601911624618,
+      "consistency_z": 0.7604632820104956,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.7145929454565643,
+      "deg_per_lap": 0.0465769710515193,
+      "laps_in_data": 5365
+    },
+    "VAN": {
+      "driver_rating": 70.0,
+      "tyre_z": 0.5325884860859796,
+      "consistency_z": 0.2984332199074144,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.9305126582274124,
+      "deg_per_lap": 0.04373608349567938,
+      "laps_in_data": 1046
+    },
+    "VER": {
+      "driver_rating": 85.18072815589939,
+      "tyre_z": -2.484103655858981,
+      "consistency_z": 0.19011761508958216,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": -0.7080136580614375,
+      "deg_per_lap": 0.05617317571306798,
+      "laps_in_data": 9334
+    },
+    "VES": {
+      "driver_rating": 80.0,
+      "tyre_z": 0.22776659356741724,
+      "consistency_z": -2.4165074837026754,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.41724114590500905,
+      "deg_per_lap": 0.04499279044778091,
+      "laps_in_data": 22
+    },
+    "VET": {
+      "driver_rating": 87.82696482336286,
+      "tyre_z": 1.8723671105654098,
+      "consistency_z": -0.553759004546387,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.14865014240477792,
+      "deg_per_lap": 0.0382125002066025,
+      "laps_in_data": 4938
+    },
+    "ZHO": {
+      "driver_rating": 80.2636734554488,
+      "tyre_z": -1.176922601939192,
+      "consistency_z": 0.8850030200764405,
+      "top_speed_z": 0.0,
+      "raw_pace_pct": 0.652136333711619,
+      "deg_per_lap": 0.05078398432480061,
+      "laps_in_data": 3050
+    }
+  },
+  "teams": {
+    "Alfa Romeo": {
+      "car_rating": 74.70879355901361,
+      "raw_pace_pct": 0.7008851477667252
+    },
+    "AlphaTauri": {
+      "car_rating": 76.6499058398005,
+      "raw_pace_pct": 0.5243579623048267
+    },
+    "Alpine F1 Team": {
+      "car_rating": 76.97522338791127,
+      "raw_pace_pct": 0.494773176448916
+    },
+    "Aston Martin": {
+      "car_rating": 74.5392397598431,
+      "raw_pace_pct": 0.7163045829267617
+    },
+    "Audi": {
+      "car_rating": 77.7948510320175,
+      "raw_pace_pct": 0.4202352104729401
+    },
+    "Cadillac": {
+      "car_rating": 71.09197378362957,
+      "raw_pace_pct": 1.0298032745495096
+    },
+    "Ferrari": {
+      "car_rating": 88.664113058132,
+      "raw_pace_pct": -0.5682291109933452
+    },
+    "Haas F1 Team": {
+      "car_rating": 74.39988373875667,
+      "raw_pace_pct": 0.728977794272158
+    },
+    "McLaren": {
+      "car_rating": 81.21313830499004,
+      "raw_pace_pct": 0.10937187846957146
+    },
+    "Mercedes": {
+      "car_rating": 85.8943654177267,
+      "raw_pace_pct": -0.31634478660883436
+    },
+    "RB F1 Team": {
+      "car_rating": 78.37099370553116,
+      "raw_pace_pct": 0.36784007311456424
+    },
+    "Red Bull": {
+      "car_rating": 86.06957782015824,
+      "raw_pace_pct": -0.3322788222467523
+    },
+    "Sauber": {
+      "car_rating": 75.0345617526154,
+      "raw_pace_pct": 0.6712593796446373
+    },
+    "Toro Rosso": {
+      "car_rating": 74.90795553058938,
+      "raw_pace_pct": 0.6827731082719981
+    },
+    "Williams": {
+      "car_rating": 73.68542330928484,
+      "raw_pace_pct": 0.7939517218429183
+    }
+  },
+  "model_info": {
+    "drivers_rated": 53,
+    "teams_rated": 15,
+    "total_laps": 181608,
+    "ensemble_weights": {
+      "HistGBT": 0.1982,
+      "GBR": 0.1849,
+      "RandomForest": 0.1737,
+      "ExtraTrees": 0.1785,
+      "Ridge": 0.1674,
+      "MLP": 0.0972
+    },
+    "cv_mae": {
+      "HistGBT": 0.9609,
+      "GBR": 0.9777,
+      "RandomForest": 0.9931,
+      "ExtraTrees": 0.9864,
+      "Ridge": 1.0024,
+      "MLP": 1.1481
+    },
+    "naive_mae": 1.3572
+  }
+}

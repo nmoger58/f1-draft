@@ -1,0 +1,14 @@
+{
+  "name": "f1-simulator",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Formula 1 Autonomous Multi-Car Racing Simulation",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node run_all_tests.mjs",
+    "validate": "node validate.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

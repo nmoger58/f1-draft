@@ -1,7 +1,20 @@
-/datasets/*
-/__pycache__/
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+env/
+venv/
 
-# Runtime data required by the deployed API; keep training datasets ignored.
+# Node artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore heavy raw training datasets and archives
+/datasets/*
 !/datasets/
 !/datasets/races.csv
 !/datasets/results.csv
@@ -11,3 +24,11 @@
 !/datasets/constructor_standings.csv
 !/datasets/circuits.csv
 !/datasets/sprint_results.csv
+!/datasets/f1_team_radio_commentary.csv
+
+# Allow full tracking of the F1 autonomous simulator suite
+!/datasets/f1-simulator/
+!/datasets/f1-simulator/**
+datasets/f1-simulator/node_modules/
+datasets/f1-simulator/scratch/
+datasets/f1-simulator/*.log
