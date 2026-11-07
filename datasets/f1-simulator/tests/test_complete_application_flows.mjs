@@ -17,18 +17,20 @@ import assert from 'assert';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
+import { fileURLToPath } from 'url';
+
 console.log(`\n================================================================`);
 console.log(`🏎️ STARTING COMPREHENSIVE END-TO-END APPLICATION FLOW VALIDATION`);
 console.log(`================================================================\n`);
 
-const htmlPath = resolve('c:/Users/rajmo/test/datasets/f1-simulator/index.html');
+const htmlPath = fileURLToPath(new URL('../index.html', import.meta.url));
 const htmlContent = readFileSync(htmlPath, 'utf-8');
 
 // ─── FLOW 1: LANDING PAGE & AUDIO FLOW ──────────────────────────
 console.log(`▶ FLOW 1: Landing Page & Audio Flow`);
 assert(htmlContent.includes('id="landingView"'), 'Landing page view container must exist');
 
-const landingJs = readFileSync(resolve('c:/Users/rajmo/test/datasets/f1-simulator/src/ui/landingPage.js'), 'utf-8');
+const landingJs = readFileSync(fileURLToPath(new URL('../src/ui/landingPage.js', import.meta.url)), 'utf-8');
 assert(landingJs.includes('hero_sunset_race.png'), 'Hero sunset background image must be present');
 assert(landingJs.includes('id="lpBtnMusic"'), 'Speaker mute/play button must exist on landing page');
 console.log(`  ✅ Landing page structure, hero background, and audio controls validated.`);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { getChromePath, getTempProfileDir } from './testHelper.js';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const APP_URL = 'http://localhost:8765/';
 
 async function sleep(ms) {
@@ -11,13 +11,15 @@ async function sleep(ms) {
 async function runNavbarValidation() {
   console.log('🏎️  VALIDATING NAVBAR REDESIGN ACROSS VIEWPORTS AND FUNCTIONALITY\n');
 
-  const chromeProc = spawn(CHROME_PATH, [
+  const profileDir = getTempProfileDir('chrome-navbar');
+  const chromeProc = spawn(getChromePath(), [
     '--headless=new',
     '--remote-debugging-port=9235',
     '--disable-gpu',
     '--no-sandbox',
     '--disable-extensions',
     '--disable-background-networking',
+    `--user-data-dir=${profileDir}`,
     APP_URL
   ]);
 

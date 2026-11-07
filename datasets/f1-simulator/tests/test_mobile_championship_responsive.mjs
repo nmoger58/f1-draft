@@ -15,8 +15,8 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { ChampionshipViews } from '../src/ui/championshipViews.js';
+import { getChromePath, getTempProfileDir } from './testHelper.js';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const APP_URL = 'http://localhost:8765/';
 const DEBUG_PORT = 9240;
 
@@ -59,13 +59,15 @@ console.log('  ✅ Championship wizard mounts cleanly with backdrop and step ind
 // ── E2E HEADLESS BROWSER VALIDATION ──────────────────────────────────────────
 console.log('\n--- TEST GROUP 2: Headless Browser E2E Responsive Verification ---');
 
-const chromeProc = spawn(CHROME_PATH, [
+const profileDir = getTempProfileDir('chrome-championship-resp');
+const chromeProc = spawn(getChromePath(), [
   '--headless=new',
   `--remote-debugging-port=${DEBUG_PORT}`,
   '--disable-gpu',
   '--no-sandbox',
   '--disable-extensions',
   '--disable-background-networking',
+  `--user-data-dir=${profileDir}`,
   APP_URL
 ]);
 

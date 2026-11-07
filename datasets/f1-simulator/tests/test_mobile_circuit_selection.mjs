@@ -17,8 +17,8 @@ import {
   bindCircuitSelectionEvents
 } from '../src/ui/circuitSelect.js';
 import { QuickRaceViews } from '../src/ui/quickRaceWizard.js';
+import { getChromePath, getTempProfileDir } from './testHelper.js';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const APP_URL = 'http://localhost:8765/';
 const DEBUG_PORT = 9238;
 
@@ -76,13 +76,15 @@ console.log('  ✅ Selected circuit information updates dynamically with authent
 console.log('\n--- TEST GROUP 2: Viewport Optimisation & Headless Browser E2E ---');
 
 async function runBrowserTests() {
-  const chromeProc = spawn(CHROME_PATH, [
+  const profileDir = getTempProfileDir('chrome-circuit-select');
+  const chromeProc = spawn(getChromePath(), [
     '--headless=new',
     `--remote-debugging-port=${DEBUG_PORT}`,
     '--disable-gpu',
     '--no-sandbox',
     '--disable-extensions',
     '--disable-background-networking',
+    `--user-data-dir=${profileDir}`,
     APP_URL
   ]);
 

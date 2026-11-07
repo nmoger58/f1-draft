@@ -13,8 +13,8 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import WebSocket from 'ws';
+import { getChromePath, getTempProfileDir } from './testHelper.js';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const APP_URL = 'http://localhost:8765/';
 const DEBUG_PORT = 9260;
 
@@ -24,13 +24,15 @@ async function sleep(ms) {
 
 console.log('🏎️  RUNNING CHAMPIONSHIP MODE & MAIN MENU ROUTING VERIFICATION SUITE\n');
 
-const chromeProc = spawn(CHROME_PATH, [
+const profileDir = getTempProfileDir('chrome-championship');
+const chromeProc = spawn(getChromePath(), [
   '--headless=new',
   `--remote-debugging-port=${DEBUG_PORT}`,
   '--disable-gpu',
   '--no-sandbox',
   '--disable-extensions',
   '--disable-background-networking',
+  `--user-data-dir=${profileDir}`,
   APP_URL
 ]);
 

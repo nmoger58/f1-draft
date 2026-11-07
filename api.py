@@ -48,6 +48,16 @@ _simulator_dir = os.path.join(os.path.dirname(__file__), "datasets", "f1-simulat
 if os.path.exists(_simulator_dir):
     app.mount("/simulator", StaticFiles(directory=_simulator_dir, html=True), name="simulator")
 
+@app.get("/health")
+@app.get("/api/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "f1-draft-sim-api",
+        "version": "3.0",
+        "timestamp": time.time()
+    }
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     with open("public/index.html", "r", encoding="utf-8") as f:

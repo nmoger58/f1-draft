@@ -44,6 +44,19 @@ const server = http.createServer((req, res) => {
     decodedUrl = rawUrl;
   }
 
+  // Healthcheck endpoint for CI/CD and cloud platform monitoring
+  if (decodedUrl === '/health' || decodedUrl === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      uptime: process.uptime(),
+      timestamp: Date.now(),
+      service: 'f1-apex-simulator',
+      version: '2.0.0'
+    }));
+    return;
+  }
+
   // REST API Endpoints for multiplayer checks
   if (decodedUrl === '/api/multiplayer/public-rooms') {
     res.writeHead(200, { 'Content-Type': 'application/json' });

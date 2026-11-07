@@ -1,8 +1,9 @@
 import { readdirSync } from 'fs';
 import { execSync } from 'child_process';
 import { resolve, join } from 'path';
+import { fileURLToPath } from 'url';
 
-const rootDir = resolve('c:/Users/rajmo/test/datasets/f1-simulator');
+const rootDir = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const testsDir = resolve(rootDir, 'tests');
 const files = readdirSync(testsDir).filter(f => f.startsWith('test_') && f.endsWith('.mjs'));
 

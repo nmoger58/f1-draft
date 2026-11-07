@@ -68,7 +68,9 @@ export class CommentaryEngine {
             path.resolve(process.cwd(), 'data/f1_team_radio_commentary.csv'),
             path.resolve(process.cwd(), '../f1_team_radio_commentary.csv'),
             path.resolve(process.cwd(), 'f1_team_radio_commentary.csv'),
-            'C:\\Users\\rajmo\\test\\datasets\\f1_team_radio_commentary.csv'
+            path.resolve(process.cwd(), 'datasets/f1_team_radio_commentary.csv'),
+            path.resolve(process.cwd(), '../../datasets/f1_team_radio_commentary.csv'),
+            path.resolve(path.dirname(import.meta.url ? new URL(import.meta.url).pathname : process.cwd()), '../../../../datasets/f1_team_radio_commentary.csv')
           ];
           for (const p of candidatePaths) {
             if (fs.existsSync(p)) {

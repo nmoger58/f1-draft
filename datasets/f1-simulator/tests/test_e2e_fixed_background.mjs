@@ -7,15 +7,18 @@
 import { spawn } from 'child_process';
 import { strict as assert } from 'assert';
 
+import { getChromePath, getTempProfileDir } from './testHelper.js';
+
 console.log('🏎️ ══════════════════════════════════════════════════════════════');
 console.log('   E2E BROWSER VALIDATION: FIXED SCREEN BACKGROUND & GAMING UI   ');
 console.log('════════════════════════════════════════════════════════════════\n');
 
-const profileDir = `C:\\Users\\rajmo\\AppData\\Local\\Temp\\chrome-fixed-bg-${Date.now()}`;
-const chrome = spawn('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', [
+const profileDir = getTempProfileDir('chrome-fixed-bg');
+const chrome = spawn(getChromePath(), [
   '--headless=new',
   '--remote-debugging-port=9222',
   '--disable-gpu',
+  '--no-sandbox',
   '--autoplay-policy=no-user-gesture-required',
   `--user-data-dir=${profileDir}`,
   'http://localhost:8765/'

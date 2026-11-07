@@ -1,0 +1,69 @@
+name: CD - Production Deployment & Release Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Deployment Target Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  # ─── 1. DEPLOYMENT PIPELINE ────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production Cloud (Render / Multi-Service)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: 🔍 Pre-Deployment Health & File Integrity Check
+        run: |
+          echo "Verifying deployment assets..."
+          test -f "datasets/f1-simulator/server.js" || (echo "Missing server.js" && exit 1)
+          test -f "datasets/f1-simulator/index.html" || (echo "Missing index.html" && exit 1)
+          test -f "render.yaml" || (echo "Missing render.yaml" && exit 1)
+          echo "✅ Pre-deployment file verification passed."
+
+      - name: 🚀 Trigger Render Deployment Webhook
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -n "$RENDER_HOOK" ]; then
+            echo "Triggering automated deployment webhook on Render..."
+            RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$RENDER_HOOK")
+            HTTP_CODE=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d':' -f2)
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "✅ Render deployment successfully triggered! HTTP $HTTP_CODE"
+            else
+              echo "⚠️ Render deployment webhook returned status $HTTP_CODE"
+              echo "$RESPONSE"
+            fi
+          else
+            echo "ℹ️ RENDER_DEPLOY_HOOK_URL secret not configured in repository."
+            echo "To enable automated production deployments:"
+            echo "  1. In Render Dashboard, navigate to your service -> Settings -> Deploy Hook"
+            echo "  2. Copy the Webhook URL"
+            echo "  3. In GitHub repo Settings -> Secrets and variables -> Actions, add RENDER_DEPLOY_HOOK_URL"
+          fi
+
+      - name: 📊 Deployment Summary Report
+        if: always()
+        run: |
+          echo "### 🏎️ F1 Apex Racing — Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Services Ready**: Node.js WebSocket Simulator + Python ML API" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Ready for zero-downtime deployment" >> $GITHUB_STEP_SUMMARY
