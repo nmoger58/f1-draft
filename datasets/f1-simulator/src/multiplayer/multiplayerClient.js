@@ -7,6 +7,19 @@
  * high-frequency race telemetry and finish events.
  */
 
+const WS = typeof WebSocket !== 'undefined'
+  ? WebSocket
+  : (typeof globalThis !== 'undefined' && globalThis.WebSocket ? globalThis.WebSocket : undefined);
+
+function getWebSocketClass() {
+  if (typeof WebSocket !== 'undefined') return WebSocket;
+  if (typeof globalThis !== 'undefined' && globalThis.WebSocket) return globalThis.WebSocket;
+  return WS;
+}
+
+const WS_OPEN = 1;
+const WS_CONNECTING = 0;
+
 export class MultiplayerClient {
   constructor(options = {}) {
     this.wsUrl = options.wsUrl || this._getDefaultWsUrl();
@@ -76,12 +89,16 @@ export class MultiplayerClient {
   // ── Connection Management ──────────────────────────────────────────────────
 
   connect() {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+    const WSClass = getWebSocketClass();
+    const wsOpen = WSClass ? WSClass.OPEN : WS_OPEN;
+    const wsConnecting = WSClass ? WSClass.CONNECTING : WS_CONNECTING;
+
+    if (this.ws && this.ws.readyState === wsOpen) {
       this.connected = true;
       return Promise.resolve();
     }
 
-    if (this.ws && this.ws.readyState === WebSocket.CONNECTING && this._connectPromise) {
+    if (this.ws && this.ws.readyState === wsConnecting && this._connectPromise) {
       return this._connectPromise;
     }
 
@@ -112,7 +129,9 @@ export class MultiplayerClient {
       }
 
       try {
-        ws = new WebSocket(this.wsUrl);
+        const ResolvedWS = getWebSocketClass();
+        if (!ResolvedWS) throw new Error('WebSocket implementation not available');
+        ws = new ResolvedWS(this.wsUrl);
       } catch (err) {
         return fail(err);
       }
@@ -320,7 +339,8 @@ export class MultiplayerClient {
   }
 
   _send(payload) {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+    const wsOpen = getWebSocketClass() ? getWebSocketClass().OPEN : WS_OPEN;
+    if (!this.ws || this.ws.readyState !== wsOpen) {
       return Promise.reject(new Error('WebSocket is not connected'));
     }
     return new Promise((resolve, reject) => {
@@ -446,8 +466,9 @@ export class MultiplayerClient {
   }
 
   sendTelemetry(telemetry) {
+    const wsOpen = getWebSocketClass() ? getWebSocketClass().OPEN : WS_OPEN;
     if (!this.connected || !this.myParticipant) return;
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    if (!this.ws || this.ws.readyState !== wsOpen) return;
     try {
       this.ws.send(JSON.stringify({
         type: 'RACE_TELEMETRY',
@@ -458,7 +479,8 @@ export class MultiplayerClient {
   }
 
   sendPing() {
-    if (!this.connected || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const wsOpen = getWebSocketClass() ? getWebSocketClass().OPEN : WS_OPEN;
+    if (!this.connected || !this.ws || this.ws.readyState !== wsOpen) return;
     try {
       this.ws.send(JSON.stringify({
         type: 'PING',
@@ -567,7 +589,8 @@ export class MultiplayerClient {
       clearTimeout(this._reconnectTimer);
       this._reconnectTimer = null;
     }
-    if (this.myParticipant && this.ws && this.ws.readyState === WebSocket.OPEN) {
+    const wsOpen = getWebSocketClass() ? getWebSocketClass().OPEN : WS_OPEN;
+    if (this.myParticipant && this.ws && this.ws.readyState === wsOpen) {
       try {
         await this._send({
           type: 'LEAVE_ROOM',

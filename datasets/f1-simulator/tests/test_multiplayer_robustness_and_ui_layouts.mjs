@@ -8,6 +8,12 @@
 
 import assert from 'assert';
 import fs from 'fs';
+import WebSocket from 'ws';
+
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = WebSocket;
+}
+
 import { MultiplayerClient } from '../src/multiplayer/multiplayerClient.js';
 import { RaceEngine } from '../src/simulation/raceEngine.js';
 import { buildTrack } from '../src/simulation/trackManager.js';

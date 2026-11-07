@@ -53,8 +53,8 @@ jobs:
           
           # Poll /health until server is responsive (max 30s)
           for i in {1..30}; do
-            if curl -s http://localhost:8765/health | grep -q '"status":"healthy"'; then
-              echo "✅ Simulator server is healthy on http://localhost:8765/health"
+            if curl -s http://127.0.0.1:8765/health | grep -q '"status":"healthy"'; then
+              echo "✅ Simulator server is healthy on http://127.0.0.1:8765/health"
               break
             fi
             sleep 1

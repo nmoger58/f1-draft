@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { getChromePath, getTempProfileDir } from './testHelper.js';
+import { getChromePath, getTempProfileDir, connectToChromePage } from './testHelper.js';
 
 const APP_URL = 'http://localhost:8765/';
 
@@ -15,6 +15,8 @@ async function runNavbarValidation() {
   const chromeProc = spawn(getChromePath(), [
     '--headless=new',
     '--remote-debugging-port=9235',
+    '--remote-debugging-address=127.0.0.1',
+    '--disable-dev-shm-usage',
     '--disable-gpu',
     '--no-sandbox',
     '--disable-extensions',
@@ -36,15 +38,26 @@ async function runNavbarValidation() {
   }
 
   async function evalInBrowser(expression) {
-    const res = await sendCommand('Runtime.evaluate', {
-      expression,
-      returnByValue: true,
-      awaitPromise: true
-    });
-    if (res.exceptionDetails) {
-      throw new Error(`Eval error: ${JSON.stringify(res.exceptionDetails)}`);
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const res = await sendCommand('Runtime.evaluate', {
+          expression,
+          returnByValue: true,
+          awaitPromise: true
+        });
+        if (res?.exceptionDetails) {
+          throw new Error(`Eval error: ${JSON.stringify(res.exceptionDetails)}`);
+        }
+        return res?.result?.value;
+      } catch (err) {
+        const isCtx = err?.code === -32000 || (err?.message && (err.message.includes('-32000') || err.message.includes('Execution context was destroyed')));
+        if (isCtx && attempt < 4) {
+          await sleep(200);
+          continue;
+        }
+        throw err;
+      }
     }
-    return res.result.value;
   }
 
   async function setViewport(width, height) {
@@ -58,39 +71,21 @@ async function runNavbarValidation() {
   }
 
   try {
-    // Wait for Chrome remote debugging
-    let connected = false;
-    let wsUrl = '';
-    for (let i = 0; i < 30; i++) {
-      try {
-        const resp = await fetch('http://127.0.0.1:9235/json');
-        const tabs = await resp.json();
-        const pageTab = tabs.find(t => t.type === 'page' && t.url.includes('localhost:8765'));
-        if (pageTab?.webSocketDebuggerUrl) {
-          wsUrl = pageTab.webSocketDebuggerUrl;
-          connected = true;
-          break;
+    ws = await connectToChromePage(9235, '8765');
+
+    ws.on('message', (data) => {
+      const parsed = JSON.parse(data);
+      if (parsed.id && pending.has(parsed.id)) {
+        const { resolve, reject } = pending.get(parsed.id);
+        pending.delete(parsed.id);
+        if (parsed.error) {
+          const err = new Error(parsed.error.message || 'CDP Error');
+          err.code = parsed.error.code;
+          reject(err);
+        } else {
+          resolve(parsed.result);
         }
-      } catch {
-        await sleep(200);
       }
-    }
-    assert(connected, 'Failed to connect to headless Chrome page');
-
-    const WebSocket = (await import('ws')).default;
-    ws = new WebSocket(wsUrl);
-
-    await new Promise((resolve) => {
-      ws.on('open', resolve);
-      ws.on('message', (data) => {
-        const parsed = JSON.parse(data);
-        if (parsed.id && pending.has(parsed.id)) {
-          const { resolve, reject } = pending.get(parsed.id);
-          pending.delete(parsed.id);
-          if (parsed.error) reject(parsed.error);
-          else resolve(parsed.result);
-        }
-      });
     });
 
     await sendCommand('Page.enable');

@@ -333,12 +333,27 @@ function normaliseCar(row, year, teamRank, total) {
 // ── CSV fetch helpers ─────────────────────────────────────────────────────────
 
 async function fetchCsv(url) {
-  let targetUrl = url;
-  if (typeof window === 'undefined' && targetUrl.startsWith('/')) {
-    targetUrl = 'http://localhost:8765' + targetUrl;
+  if (typeof window === 'undefined') {
+    try {
+      const fs = await import('fs');
+      const { fileURLToPath } = await import('url');
+      const relPath = url.startsWith('/') ? url.slice(1) : url;
+      const filePath = fileURLToPath(new URL('../../' + relPath, import.meta.url));
+      const text = fs.readFileSync(filePath, 'utf8');
+      return parseCsv(text);
+    } catch (_) {
+      let targetUrl = url;
+      if (targetUrl.startsWith('/')) {
+        targetUrl = 'http://127.0.0.1:8765' + targetUrl;
+      }
+      const res = await fetch(targetUrl);
+      if (!res.ok) throw new Error(`CSV fetch failed: ${targetUrl} (${res.status})`);
+      return parseCsv(await res.text());
+    }
   }
-  const res = await fetch(targetUrl);
-  if (!res.ok) throw new Error(`CSV fetch failed: ${targetUrl} (${res.status})`);
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`CSV fetch failed: ${url} (${res.status})`);
   return parseCsv(await res.text());
 }
 

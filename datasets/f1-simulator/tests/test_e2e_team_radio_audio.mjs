@@ -11,7 +11,7 @@
 import { spawn } from 'child_process';
 import { strict as assert } from 'assert';
 
-import { getChromePath, getTempProfileDir } from './testHelper.js';
+import { getChromePath, getTempProfileDir, connectToChromePage } from './testHelper.js';
 
 console.log('📻 ══════════════════════════════════════════════════════════════');
 console.log('   E2E BROWSER VALIDATION: TEAM RADIO CHIRP & LIVE CARRIER AUDIO ');
@@ -21,6 +21,8 @@ const profileDir = getTempProfileDir('chrome-radio-e2e');
 const chrome = spawn(getChromePath(), [
   '--headless=new',
   '--remote-debugging-port=9228',
+  '--remote-debugging-address=127.0.0.1',
+  '--disable-dev-shm-usage',
   '--disable-gpu',
   '--no-sandbox',
   '--autoplay-policy=no-user-gesture-required',
@@ -29,23 +31,7 @@ const chrome = spawn(getChromePath(), [
 ]);
 
 async function run() {
-  await new Promise(r => setTimeout(r, 2500));
-
-  let res, tabs;
-  for (let i = 0; i < 5; i++) {
-    try {
-      res = await fetch('http://localhost:9228/json');
-      tabs = await res.json();
-      break;
-    } catch (_) {
-      await new Promise(r => setTimeout(r, 500));
-    }
-  }
-
-  const pageTab = tabs?.find(t => t.type === 'page' && t.url.includes('localhost:8765'));
-  assert(pageTab, 'Browser must have opened simulator page');
-
-  const ws = new WebSocket(pageTab.webSocketDebuggerUrl);
+  const ws = await connectToChromePage(9228, '8765');
 
   let msgId = 1;
   const pending = new Map();
@@ -56,35 +42,51 @@ async function run() {
       console.error('❌ BROWSER EXCEPTION:', msg.params.exceptionDetails.text, msg.params.exceptionDetails.exception?.description);
     }
     if (msg.id && pending.has(msg.id)) {
-      const { resolve } = pending.get(msg.id);
+      const { resolve, reject } = pending.get(msg.id);
       pending.delete(msg.id);
-      resolve(msg.result?.result?.value ?? msg.result);
+      if (msg.error) {
+        const err = new Error(msg.error.message || 'CDP Error');
+        err.code = msg.error.code;
+        if (reject) reject(err);
+        else resolve(msg.result?.result?.value ?? msg.result);
+      } else {
+        resolve(msg.result?.result?.value ?? msg.result);
+      }
     }
   };
 
   const evalInBrowser = (expr) => {
-    return new Promise((resolve) => {
-      const id = ++msgId;
-      pending.set(id, { resolve });
-      ws.send(JSON.stringify({
-        id,
-        method: 'Runtime.evaluate',
-        params: {
-          expression: expr,
-          returnByValue: true,
-          awaitPromise: true
+    return new Promise(async (resolve, reject) => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const res = await new Promise((resFn, rejFn) => {
+            const id = ++msgId;
+            pending.set(id, { resolve: resFn, reject: rejFn });
+            ws.send(JSON.stringify({
+              id,
+              method: 'Runtime.evaluate',
+              params: {
+                expression: expr,
+                returnByValue: true,
+                awaitPromise: true
+              }
+            }));
+          });
+          return resolve(res);
+        } catch (err) {
+          const isCtx = err?.code === -32000 || (err?.message && (err.message.includes('-32000') || err.message.includes('Execution context was destroyed')));
+          if (isCtx && attempt < 4) {
+            await new Promise(r => setTimeout(r, 200));
+            continue;
+          }
+          return reject(err);
         }
-      }));
+      }
     });
   };
 
-  await new Promise((resolve) => {
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ id: ++msgId, method: 'Runtime.enable' }));
-      ws.send(JSON.stringify({ id: ++msgId, method: 'Page.enable' }));
-      resolve();
-    };
-  });
+  ws.send(JSON.stringify({ id: ++msgId, method: 'Runtime.enable' }));
+  ws.send(JSON.stringify({ id: ++msgId, method: 'Page.enable' }));
 
   // Enable Runtime
   await evalInBrowser('1+1');
