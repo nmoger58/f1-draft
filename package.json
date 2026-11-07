@@ -6,7 +6,7 @@
   "main": "datasets/f1-simulator/server.js",
   "scripts": {
     "start": "node datasets/f1-simulator/server.js",
-    "test": "cd datasets/f1-simulator && node run_all_tests.mjs",
+    "test": "node datasets/f1-simulator/run_all_tests.mjs",
     "server": "node datasets/f1-simulator/server.js",
     "build": "echo 'Deploy ready'"
   },

@@ -42,7 +42,7 @@ export function getTempProfileDir(prefix = 'chrome-e2e') {
   return dir;
 }
 
-export async function connectToChromePage(debugPort, targetUrlSubstring = '', maxRetries = 35) {
+export async function connectToChromePage(debugPort, targetUrlSubstring = '', maxRetries = 60) {
   let wsUrl = '';
   let pageTab = null;
 
@@ -66,7 +66,7 @@ export async function connectToChromePage(debugPort, targetUrlSubstring = '', ma
     } catch (_) {
       // Chrome remote debugging port not responding yet
     }
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 250));
   }
 
   if (!pageTab || !wsUrl) {
