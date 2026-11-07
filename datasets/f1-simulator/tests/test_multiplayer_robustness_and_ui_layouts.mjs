@@ -89,8 +89,8 @@ console.log('✅ Test 3 Passed: RaceEngine maps participantId, displayName, and 
 
 // ── Test 4: Multiplayer UI Templates & Layout Inspection ────────────────────
 console.log('Test 4: Multiplayer Views Markup & CSS Structure Inspection');
-const viewsCode = fs.readFileSync('./src/multiplayer/multiplayerViews.js', 'utf8');
-const cssCode = fs.readFileSync('./styles/main.css', 'utf8');
+const viewsCode = fs.readFileSync(new URL('../src/multiplayer/multiplayerViews.js', import.meta.url), 'utf8');
+const cssCode = fs.readFileSync(new URL('../styles/main.css', import.meta.url), 'utf8');
 
 // Hub Layout
 assert.ok(viewsCode.includes('id="mpConnStatusBadge"'), 'Hub must have connection status badge');

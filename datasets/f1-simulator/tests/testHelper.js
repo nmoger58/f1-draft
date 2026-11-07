@@ -74,7 +74,11 @@ export async function connectToChromePage(debugPort, targetUrlSubstring = '', ma
   }
 
   const WebSocket = (await import('ws')).default;
-  const ws = new WebSocket(wsUrl);
+  let cleanWsUrl = wsUrl;
+  if (cleanWsUrl.includes('//localhost:')) {
+    cleanWsUrl = cleanWsUrl.replace('//localhost:', '//127.0.0.1:');
+  }
+  const ws = new WebSocket(cleanWsUrl);
 
   await new Promise((resolve, reject) => {
     ws.once('open', resolve);

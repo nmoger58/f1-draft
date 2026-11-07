@@ -23,7 +23,7 @@ const chrome = spawn(getChromePath(), [
   '--no-sandbox',
   '--autoplay-policy=no-user-gesture-required',
   `--user-data-dir=${profileDir}`,
-  'http://localhost:8765/'
+  'http://127.0.0.1:8765/'
 ]);
 
 async function run() {

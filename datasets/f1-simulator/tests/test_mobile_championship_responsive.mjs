@@ -17,7 +17,7 @@ import { spawn } from 'node:child_process';
 import { ChampionshipViews } from '../src/ui/championshipViews.js';
 import { getChromePath, getTempProfileDir, connectToChromePage } from './testHelper.js';
 
-const APP_URL = 'http://localhost:8765/';
+const APP_URL = 'http://127.0.0.1:8765/';
 const DEBUG_PORT = 9240;
 
 async function sleep(ms) {

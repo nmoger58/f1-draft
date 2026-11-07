@@ -345,6 +345,8 @@ async function fetchCsv(url) {
       let targetUrl = url;
       if (targetUrl.startsWith('/')) {
         targetUrl = 'http://127.0.0.1:8765' + targetUrl;
+      } else if (!targetUrl.startsWith('http')) {
+        targetUrl = 'http://127.0.0.1:8765/' + targetUrl;
       }
       const res = await fetch(targetUrl);
       if (!res.ok) throw new Error(`CSV fetch failed: ${targetUrl} (${res.status})`);

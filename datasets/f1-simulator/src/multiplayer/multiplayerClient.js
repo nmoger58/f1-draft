@@ -43,7 +43,7 @@ export class MultiplayerClient {
   _getDefaultWsUrl() {
     if (typeof window !== 'undefined' && window.location) {
       if (window.location.protocol === 'file:' || !window.location.hostname) {
-        return 'ws://localhost:8765/';
+        return 'ws://127.0.0.1:8765/';
       }
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.hostname;
@@ -54,7 +54,7 @@ export class MultiplayerClient {
       }
       return `${proto}//${window.location.host}/`;
     }
-    return 'ws://localhost:8765/';
+    return 'ws://127.0.0.1:8765/';
   }
 
   // ── Session persistence ────────────────────────────────────────────────────
@@ -551,7 +551,7 @@ export class MultiplayerClient {
       try {
         const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
           ? window.location.origin
-          : 'http://localhost:8765';
+          : 'http://127.0.0.1:8765';
         const resp = await fetch(`${baseUrl}/api/multiplayer/public-rooms`);
         if (resp.ok) {
           const json = await resp.json();
