@@ -44,7 +44,8 @@ jobs:
           cd datasets/f1-simulator
           npm install
 
-      - name: 🚀 Start Simulator Server (Background)
+      - name: 🚀 Start Simulator Server (Linux Background)
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           node datasets/f1-simulator/server.js &
